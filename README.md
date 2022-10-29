@@ -1,7 +1,7 @@
 # mousehunt scripts
 
 A couple of scripts to make it more convenient to play [Mousehunt](https://www.mousehuntgame.com/).<br>
-* [autohunt.py](#autohunt)--A script to automate some key aspects of the game.
+* [autohunt.py](#autohunt)--A script to automate some aspects of MH.
 * [mhconsole.py](#mhconsole)--A console-like interface for interacting with the game.
 * [shuffle.py](#shuffle)--A small script to automate solving Spooky Shuffle in MH's Halloween 2022 event.
 
@@ -13,7 +13,7 @@ To run these scripts, you'll need python with the [requests library](https://pyp
 <a name="autohunt"/>
 
 ## autohunt.py
-This script automates some key aspects of MH. It's most basic function is to sound the horn regularly, with a couple of antibot evasion features built in. It also has options to automate things like travelling, changing the trap setup, buying and crafting things, etc., according to the requirements of some quests. 
+This script automates some aspects of MH. It's most basic function is to sound the horn regularly. It also has options to automate things like travelling, changing the trap setup, buying and crafting things, etc., according to the requirements of some quests. 
 
 ### Basic usage
 Change the first few lines of the script to include some form of valid credentials (either username + password or an active session cookie), then run the script without arguments. If the credentials provided are valid, the script will start and sound the horn at 15-20 mins intervals continually until you abort it.
@@ -44,8 +44,21 @@ Running autohunt with one of the preset cycles will automate some game actions t
 
 |Cycle (-C)|Brief description|Requirements|Script actions|Arguments (-z)|
 |---|---|---|---|---|
-|gnawnia|Town of gnawnia quest|None|If there is a reward, claim it.<br>If there is a hidden bounty, show it.<br>If there is an ongoing bounty, arm the bait to catch it.<br>If the required bait is lacking, buy 2 of it|None|
-
+|gnawnia|Town quest|None|Follow quest steps|None|
+|windmill|Windmill quest|Follow quest steps|None|
+|harbour|Pirates quest|Access to harbour|Follow quest steps|None|
+|mountain|Mountain quest|Access to mountain<br>Charm conduit|Follow quest steps|None|
+|mousoleum|Catch mousevina|Access to laboratory<br>Shadow trap|Follow quest steps|None|
+|tree|Catch fairy/cherry/hydra|Access to great gnarled tree<br>Tactical trap<br>Access to lagoon if aiming for hydra|Hunt at tree for the relevant potions, then make  and arm gnarled/cherry/wicked gnarly cheese|f: aim for fairy<br>c: aim for cherry<br>h: aim for hydra|
+|furoma|Furoma cycle|Access to furoma<br>Tactical trap|If can get/have onyx, aim for sensei<br>If can get/have rumble, aim for master<br>If can get/have susheese, aim for claw master<br>If can get/have combat, aim for fang master<br>If can get/have glutter, aim for belt master<br>Otherwise, aim for students|integer: number of onyx stone to keep|
+|burglar|Catch master burglar|Access to bazaar|Get and arm gilded cheese|None|
+|gauntlet|Gauntlet quest|Access to gauntlet<br>Forgotten, hydro, arcane, shadow, tactical, and physical traps|Hunt at highest possible level of gauntlet|s: Use superbrie formula when using potions|
+|tribal|Catch balack, dread, or chieftians|If aiming for balack, access to balack's cove and a forgotten trap<br>If aiming for horde, access to dracano and a draconic trap<br>If aiming for chieftians, access to tribal isles<br>|Follow chieftian quest steps to get seeds<br>If not aiming for chieftians, follow horde quest steps to get vanilla beans<br>If not aiming for horde or chieftians, follow balack quest steps|No args: Aim for balack<br>h: Aim for horde<br>c: Aim for chieftians|
+|digby|Catch big bad burroughs|Access to digby and laboratory|Craft limelight cheese, then hunt with it at digby|None|
+|toxic|Pollutinum quest|Access to toxic spill|Follow quest steps|None|
+|iceberg|Go through iceberg|Access to iceberg|Go through iceberg, arming the best bases available|None|
+|zzt|Zugzwang's tower|Access to seasonal garden and zzt|Charge amplifier at garden, then hunt through zzt|m: Aim for mystic team<br>t: Aim for technic team<br>d: Aim for double king<br>c: Aim for chess master<br>q: Use checkmate cheese when aiming for queen<br>s: Use superbrie formula when crafting checkmate cheese|
+|halloween|Halloween 2022 event|Access to event location|Hunt with highest level cheese.<br>If cauldron queue has slot and have 15 of some ingredient, brew--cheese before roots|r: Don't brew root<br>b: Don't hunt using bonefort|
 
 ### Other features
 **User-agent.** For stealthiness, autohunt tries to replicate the http headers that would have been sent with requests made from a browser. The User-Agent header is customisable, and you should choose the one corresponding to the browser on which you normally play MH. If you run autohunt with the -ua option set to these pre-defined values, the User-Agent header will be set accordingly:
