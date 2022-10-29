@@ -54,18 +54,16 @@ Running autohunt with one of the preset cycles will automate some game actions t
 * 'edge': edge on windows
 * 'mac': safari on mac
 * 'iphone': safari on iphone
-* 
+
 If you set anything else as the value of ua, the User-Agent header is set to that.
 
 **Logging.** If you want to log the hunts made with autohunt, run autohunt with the -L option set to the location of the log file you want to use (it doesn't have to exist yet). Some stuff about each hunt will be logged to that file, and you can do whatever data stuff you want to with it.
 
-<br><br><br><hr />
+<br><br><hr />
 <a name="mhconsole"/>
 
 ## mhconsole.py
 This is intended to be a companion script to autohunt. It creates a CLI for interacting with the game, so you can do simple things like move or buy things between horns while autohunt is running, without going to the trouble of accessing the game in-browser.
-
-(The interface design is modelled after [msfconsole](https://www.offensive-security.com/metasploit-unleashed/msfconsole/).)
 
 ### Logging in
 As with autohunt, you can login either using your MH username + password or an active session cookie. You can either modify the first few lines of the script to input your credentials, or submit them after mhconsole has started. If you choose the latter, mhconsole will start with an unauthenticated session. From here, enter 'help' to see your options
@@ -105,7 +103,7 @@ If you're running mhconsole simultaneously with autohunt, there's a chance KR wi
 ![consolerace](img/consolerace.png)
 
 The reason this is necessary is because I didn't want mhconsole to request the page too often while in antibot mode, since that's an indicator of botting. So it only sends requests when you input something that can be submitted as a KR code.
-<br><br><br><hr />
+<br><br><hr />
 <a name="shuffle"/>
 
 ## shuffle.py
