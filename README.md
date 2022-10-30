@@ -43,7 +43,7 @@ You can run autohunt in silent mode with -S, in which the KR image isn't opened 
 Running autohunt with one of the preset cycles will automate some game actions that might be taken between horns, usually according to the requirements of a quest. Choose the cycle with -C, and if there are parameters for that cycle, set them with -z.
 
 |Cycle (-C)|Script actions|Requirements|Arguments (-z)|
-|---|---|---|---|---|
+|---|---|---|---|
 |gnawnia|Town of gnawnia quest|None|None|
 |windmill|Windmill quest|Access to windmill|None|
 |harbour|Pirates quest|Access to harbour|None|
