@@ -587,11 +587,11 @@ anything else\t\tsubmit input as captcha code'''
             elif len(cmd)==5 and cmd.isalnum(): break
             else: print('[!] code must be 5 alphanumeric characters')
         text = requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies,headers=get_headers).text
-        if 'The King has sent you a special reward' not in text: return print('[+] already solved')
+        if 'The King has sent you a special reward' not in text: return print('[+] already solved\n')
         os.system('del kingsreward.png')
         d = {'puzzle_answer':cmd,'uh':hash}
         r = requests.post('https://www.mousehuntgame.com/managers/ajax/users/solvePuzzle.php',d,cookies=cookies,headers=post_headers)
-        if 'Reward claimed!' in r.text: return print('[+] code correct')
+        if 'Reward claimed!' in r.text: return print('[+] code correct\n')
         elif 'Incorrect claim code, please try again' in r.text: print('[-] incorrect code. code is now different')
         else: print('[-] something went wrong. check if code might have changed')
         text = requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies,headers=get_headers).text
