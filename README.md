@@ -40,7 +40,7 @@ When KR appears, in the default configuration, autohunt reports 'antibot trigger
 You can run autohunt in silent mode with -S, in which the KR image isn't opened automatically. Or, you can run autohunt in out-of-band mode, in which the script doesn't expect any input but simply refreshes the page at regular intervals checking to see if KR has been solved. Use the -O option to set the interval in secs between refreshes.
 
 ### Cycles
-Running autohunt with one of the preset cycles will automate some game actions that might be taken between horns, usually according to the requirements of a quest. Choose the cycle with -C, and if there are parameters for that cycle, set them with -z.
+Running autohunt with one of the preset cycles will automate some game actions that might be taken between horns, usually according to the requirements of a quest. Choose the cycle with -C; and if there are parameters for that cycle, set them with -z.
 
 |Cycle (-C)|Script actions|Requirements|Arguments (-z)|
 |---|---|---|---|
