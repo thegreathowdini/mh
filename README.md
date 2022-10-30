@@ -45,7 +45,7 @@ Running autohunt with one of the preset cycles will automate some game actions t
 |Cycle (-C)|Brief description|Requirements|Script actions|Arguments (-z)|
 |---|---|---|---|---|
 |gnawnia|Town quest|None|Follow quest steps|None|
-|windmill|Windmill quest|Follow quest steps|None|
+|windmill|Windmill quest|Access to windmill|Follow quest steps|None|
 |harbour|Pirates quest|Access to harbour|Follow quest steps|None|
 |mountain|Mountain quest|Access to mountain<br>Charm conduit|Follow quest steps|None|
 |mousoleum|Catch mousevina|Access to laboratory<br>Shadow trap|Follow quest steps|None|
