@@ -42,23 +42,23 @@ You can run autohunt in silent mode with -S, in which the KR image isn't opened 
 ### Cycles
 Running autohunt with one of the preset cycles will automate some game actions that might be taken between horns, usually according to the requirements of a quest. Choose the cycle with -C, and if there are parameters for that cycle, set them with -z.
 
-|Cycle (-C)|Brief description|Requirements|Script actions|Arguments (-z)|
+|Cycle (-C)|Script actions|Requirements|Arguments (-z)|
 |---|---|---|---|---|
-|gnawnia|Town quest|None|Follow quest steps|None|
-|windmill|Windmill quest|Access to windmill|Follow quest steps|None|
-|harbour|Pirates quest|Access to harbour|Follow quest steps|None|
-|mountain|Mountain quest|Access to mountain<br>Charm conduit|Follow quest steps|None|
-|mousoleum|Catch mousevina|Access to laboratory<br>Shadow trap|Follow quest steps|None|
-|tree|Catch fairy/cherry/hydra|Access to great gnarled tree<br>Tactical trap<br>Access to lagoon if aiming for hydra|Hunt at tree for the relevant potions, then make  and arm gnarled/cherry/wicked gnarly cheese|f: aim for fairy<br>c: aim for cherry<br>h: aim for hydra|
-|furoma|Furoma cycle|Access to furoma<br>Tactical trap|If can get/have onyx, aim for sensei<br>If can get/have rumble, aim for master<br>If can get/have susheese, aim for claw master<br>If can get/have combat, aim for fang master<br>If can get/have glutter, aim for belt master<br>Otherwise, aim for students|integer: number of onyx stone to keep|
-|burglar|Catch master burglar|Access to bazaar|Get and arm gilded cheese|None|
-|gauntlet|Gauntlet quest|Access to gauntlet<br>Forgotten, hydro, arcane, shadow, tactical, and physical traps|Hunt at highest possible level of gauntlet|s: Use superbrie formula when using potions|
-|tribal|Catch balack, dread, or chieftians|If aiming for balack, access to balack's cove and a forgotten trap<br>If aiming for horde, access to dracano and a draconic trap<br>If aiming for chieftians, access to tribal isles<br>|Follow chieftian quest steps to get seeds<br>If not aiming for chieftians, follow horde quest steps to get vanilla beans<br>If not aiming for horde or chieftians, follow balack quest steps|No args: Aim for balack<br>h: Aim for horde<br>c: Aim for chieftians|
-|digby|Catch big bad burroughs|Access to digby and laboratory|Craft limelight cheese, then hunt with it at digby|None|
-|toxic|Pollutinum quest|Access to toxic spill|Follow quest steps|None|
-|iceberg|Go through iceberg|Access to iceberg|Go through iceberg, arming the best bases available|None|
-|zzt|Zugzwang's tower|Access to seasonal garden and zzt|Charge amplifier at garden, then hunt through zzt|m: Aim for mystic team<br>t: Aim for technic team<br>d: Aim for double king<br>c: Aim for chess master<br>q: Use checkmate cheese when aiming for queen<br>s: Use superbrie formula when crafting checkmate cheese|
-|halloween|Halloween 2022 event|Access to event location|Hunt with highest level cheese.<br>If cauldron queue has slot and have 15 of some ingredient, brew--cheese before roots|r: Don't brew root<br>b: Don't hunt using bonefort|
+|gnawnia|Town of gnawnia quest|None|None|
+|windmill|Windmill quest|Access to windmill|None|
+|harbour|Pirates quest|Access to harbour|None|
+|mountain|Mountain quest|Access to mountain<br>Charm conduit|None|
+|mousoleum|Catch mousevina|Access to laboratory<br>Shadow trap|None|
+|tree|Catch fairy/cherry/hydra mouse|Access to great gnarled tree|f: aim for fairy<br>c: aim for cherry<br>h: aim for hydra|
+|furoma|Furoma cycle|Access to furoma<br>Tactical trap|integer: number of onyx stone to keep|
+|burglar|Catch master burglar|Access to bazaar|None|
+|gauntlet|Hunt at highest possible level of gauntlet|Access to gauntlet|s: Use superbrie formula when using potions|
+|tribal|Catch balack, horde, or chieftians|Access to tribal isles|h: Don't move beyond jungle<br>c: Don't move beyond 3 isles|
+|digby|Catch big bad burroughs|Access to digby and laboratory|None|
+|toxic|Pollutinum quest (work in progress)|Access to toxic spill<br>Hydro trap|Follow quest steps|None|
+|iceberg|Go through iceberg, arming the best bases available|Access to iceberg|None|
+|zzt|Charge amplifier at garden, then hunt through zzt|Access to seasonal garden and zzt<br>Tactical trap|m: Aim for mystic team<br>t: Aim for technic team<br>d: Aim for double king<br>c: Aim for chess master<br>q: Use checkmate cheese when queen is next<br>s: Use superbrie formula when crafting checkmate cheese|
+|halloween|Halloween 2022 event<br>Hunt with highest level cheese.<br>Brew where possible; cheese before roots|Access to event location|r: Don't brew root<br>b: Don't use bonefort|
 
 ### Other features
 **User-agent.** For stealthiness, autohunt tries to replicate the http headers that would have been sent with requests made from a browser. The User-Agent header is customisable, and you should choose the one corresponding to the browser on which you normally play MH. If you run autohunt with the -ua option set to these pre-defined values, the User-Agent header will be set accordingly:
@@ -69,6 +69,8 @@ Running autohunt with one of the preset cycles will automate some game actions t
 * 'iphone': safari on iphone
 
 If you set anything else as the value of ua, the User-Agent header is set to that.
+
+**First wait.** When autohunt starts, the first horn is sounded as soon as available and without missing. To delay the first horn, set the value of the -w option to the time in minutes (from the time the script is started) the autohunt should wait before the first horn.
 
 **Logging.** If you want to log the hunts made with autohunt, run autohunt with the -L option set to the location of the log file you want to use (it doesn't have to exist yet). Some stuff about each hunt will be logged to that file, and you can do whatever data stuff you want to with it.
 
