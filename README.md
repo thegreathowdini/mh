@@ -53,7 +53,7 @@ Running autohunt with one of the preset cycles will automate some game actions t
 |furoma|Furoma cycle|Access to furoma<br>Tactical trap|integer: number of onyx stone to keep|
 |burglar|Catch master burglar|Access to bazaar|None|
 |gauntlet|Hunt at highest possible level of gauntlet|Access to gauntlet|s: Use superbrie formula when using potions|
-|tribal|Catch balack, horde, or chieftians|Access to tribal isles|h: Don't move beyond jungle<br>c: Don't move beyond 3 isles|
+|tribal|Catch balack|Access to tribal isles|h: Don't move beyond jungle<br>c: Don't move beyond 3 isles|
 |digby|Catch big bad burroughs|Access to digby and laboratory|None|
 |toxic|Pollutinum quest (work in progress)|Access to toxic spill<br>Hydro trap|Follow quest steps|None|
 |iceberg|Go through iceberg, arming the best bases available|Access to iceberg|None|
