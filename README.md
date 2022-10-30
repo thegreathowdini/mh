@@ -35,7 +35,7 @@ There are also preloaded sets of non-default values for convenience. Running aut
 ### King's reward
 When KR appears, in the default configuration, autohunt reports 'antibot triggered', downloads the KR image to your device, opens it automatically, then waits for input. From here, you have three options. If you just press enter at the prompt, autohunt opens the image again. If you enter 'url', the image url is printed. If you enter anything else, that's interpreted as an attempt to solve KR. If the code is correct, autohunt resumes.
 
-![ahantibot](img/ahantibot.png)
+![antibot](img/antibot.png)
 
 You can run autohunt in silent mode with -S, in which the KR image isn't opened automatically. Or, you can run autohunt in out-of-band mode, in which the script doesn't expect any input but simply refreshes the page at regular intervals checking to see if KR has been solved. Use the -O option to set the interval in secs between refreshes.
 
