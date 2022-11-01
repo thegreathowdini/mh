@@ -40,9 +40,9 @@ When KR appears, in the default configuration, autohunt reports 'antibot trigger
 You can run autohunt in silent mode with -S, in which the KR image isn't opened automatically. Or, you can run autohunt in out-of-band mode, in which the script doesn't expect any input but simply refreshes the page at regular intervals checking to see if KR has been solved. Use the -O option to set the interval in secs between refreshes.
 
 ### Cycles
-Running autohunt with one of the preset cycles will automate some game actions that might be taken between horns, usually according to the requirements of a quest. Choose the cycle with -C; and if there are parameters for that cycle, set them with -z.
+Running autohunt with one of the preset cycles will automate some game actions that might be taken between horns, usually according to the requirements of a quest. Choose the cycle with -C; and if there are options for that cycle, set them with -z.
 
-|Cycle (-C)|Script actions|Requirements|Arguments (-z)|
+|Cycle (-C)|Script actions|Requirements|Options (-z)|
 |---|---|---|---|
 |gnawnia|Town of gnawnia quest|None|None|
 |windmill|Windmill quest|Access to windmill|None|
@@ -53,11 +53,12 @@ Running autohunt with one of the preset cycles will automate some game actions t
 |furoma|Furoma cycle|Access to furoma<br>Tactical trap|integer: number of onyx stone to keep|
 |burglar|Catch master burglar|Access to bazaar|None|
 |gauntlet|Hunt at highest possible level of gauntlet|Access to gauntlet|s: Use superbrie formula when using potions|
-|tribal|Catch balack|Access to tribal isles<br>Physical, tactical, and hydro traps|h: Don't move beyond jungle<br>c: Don't move beyond 3 isles|
+|tribal|Tribal isles quests|For balack: access to balack's cove and forgotten trap<br>For dragon: access to dracano and draconic trap<br>For horde: access to jungle and shadow trap<br>For chieftians: access to isles and physical, tactical, and hydro traps|No options: go for balack<br>d: go for dragon<br>h: go for horde<br>c: go for chieftians|
 |digby|Catch big bad burroughs|Access to digby and laboratory|None|
 |toxic|Pollutinum quest (work in progress)|Access to toxic spill<br>Hydro trap|Follow quest steps|None|
 |iceberg|Go through iceberg, arming the best bases available|Access to iceberg|None|
 |zzt|Charge amplifier at garden, then hunt through zzt|Access to seasonal garden and zzt<br>Tactical trap|m: Aim for mystic team<br>t: Aim for technic team<br>d: Aim for double king<br>c: Aim for chess master<br>q: Use checkmate cheese when queen is next<br>s: Use superbrie formula when crafting checkmate cheese|
+|city|Claw shot city quest|Access to claw shot city|None|
 |halloween|Halloween 2022 event<br>Hunt with highest level cheese.<br>Brew where possible; cheese before roots|Access to event location|r: Don't brew root<br>b: Don't use bonefort|
 
 ### Other features
