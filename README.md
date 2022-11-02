@@ -49,16 +49,17 @@ Running autohunt with one of the preset cycles will automate some game actions t
 |harbour|Pirates quest|Access to harbour|None|
 |mountain|Mountain quest|Access to mountain<br>Charm conduit|None|
 |mousoleum|Catch mousevina|Access to laboratory<br>Shadow trap|None|
-|tree|Catch fairy/cherry/hydra mouse|Access to great gnarled tree|f: aim for fairy<br>c: aim for cherry<br>h: aim for hydra|
-|furoma|Furoma cycle|Access to furoma<br>Tactical trap|integer: number of onyx stone to keep|
+|tree|Catch fairy/cherry/hydra mouse|Access to great gnarled tree|f: Aim for fairy<br>c: Aim for cherry<br>h: Aim for hydra|
+|furoma|Furoma cycle|Access to furoma<br>Tactical trap|integer: Number of onyx stone to keep|
 |burglar|Catch master burglar|Access to bazaar|None|
 |gauntlet|Hunt at highest possible level of gauntlet|Access to gauntlet|s: Use superbrie formula when using potions|
-|tribal|Tribal isles quests|For balack: access to balack's cove and forgotten trap<br>For dragon: access to dracano and draconic trap<br>For horde: access to jungle and shadow trap<br>For chieftians: access to isles and physical, tactical, and hydro traps|No options: go for balack<br>d: go for dragon<br>h: go for horde<br>c: go for chieftians|
+|tribal|Tribal isles quests|For balack: access to balack's cove and forgotten trap<br>For dragon: access to dracano and draconic trap<br>For horde: access to jungle and shadow trap<br>For chieftians: access to isles and physical, tactical, and hydro traps|No options: Balack<br>d: Dragon<br>h: Horde<br>c: Chieftians|
 |digby|Catch big bad burroughs|Access to digby and laboratory|None|
-|toxic|Pollutinum quest (work in progress)|Access to toxic spill<br>Hydro trap|Follow quest steps|None|
+|toxic|Pollutinum quest|Access to toxic spill<br>Hydro trap|r: Refine whenever possible<br>c: Collect whenever possible|
 |iceberg|Go through iceberg, arming the best bases available|Access to iceberg|None|
 |zzt|Charge amplifier at garden, then hunt through zzt|Access to seasonal garden and zzt<br>Tactical trap|m: Aim for mystic team<br>t: Aim for technic team<br>d: Aim for double king<br>c: Aim for chess master<br>q: Use checkmate cheese when queen is next<br>s: Use superbrie formula when crafting checkmate cheese|
 |city|Claw shot city quest|Access to claw shot city|None|
+|fiery|Fiery warpath quest|Access to fiery warpath|None|
 |halloween|Halloween 2022 event<br>Hunt with highest level cheese.<br>Brew where possible; cheese before roots|Access to event location|r: Don't brew root<br>b: Don't use bonefort|
 
 ### Other features
