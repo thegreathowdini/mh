@@ -1,6 +1,6 @@
 # mousehunt scripts
 
-A couple of scripts to make it more convenient to play [Mousehunt](https://www.mousehuntgame.com/).<br>
+A couple of scripts to help with [Mousehunt](https://www.mousehuntgame.com/).<br>
 * [autohunt.py](#autohunt)--A script to automate some aspects of MH.
 * [mhconsole.py](#mhconsole)--A console-like interface for interacting with the game.
 * [shuffle.py](#shuffle)--A small script to automate solving Spooky Shuffle in MH's Halloween 2022 event.
@@ -72,7 +72,7 @@ Running autohunt with one of the preset cycles will automate some game actions t
 
 If you set anything else as the value of ua, the User-Agent header is set to that.
 
-**First wait.** When autohunt starts, the first horn is sounded as soon as available and without missing. To delay the first horn, set the value of the -w option to the time in minutes (from the time the script is started) the autohunt should wait before the first horn.
+**First wait.** When autohunt starts, the horn is first sounded 2s after it's available and without missing. To delay the first horn, set the value of the -w option to the time in minutes (from the time the script is started) the autohunt should wait.
 
 **Logging.** If you want to log the hunts made with autohunt, run autohunt with the -L option set to the location of the log file you want to use (it doesn't have to exist yet). Some stuff about each hunt will be logged to that file, and you can do whatever data stuff you want to with it.
 
