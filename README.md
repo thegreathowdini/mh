@@ -42,7 +42,7 @@ In standard mode, when KR appears, autohunt reports 'antibot triggered', downloa
 
 ![antibot](img/antibot.png)
 
-You can run autohunt in silent mode with -S, in which the KR image isn't opened automatically. Or, you can run autohunt in bypass mode, in which autohunt simply reports whether KR is active, but runs as usual even if it is. If you notice that KR is active, you can resolve it via [mhconsole](#mhconsole).
+You can run autohunt in silent mode with -S, in which the KR image isn't opened automatically. Or, you can run autohunt in bypass mode with -b, in which autohunt simply reports whether KR is active, but runs as usual even if it is. If you notice that KR is active, you can resolve it via [mhconsole](#mhconsole).
 
 ### Cycles
 Running autohunt with one of the preset cycles will automate some game actions that might be taken between horns, usually according to the requirements of a quest. Choose the cycle with -C; and if there are options for that cycle, set them with -z. To see the options for each, run autohunt with 'list' as the -C value--autohunt will print the options and quit.
