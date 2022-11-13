@@ -61,7 +61,7 @@ If you set anything else as the value of ua, the User-Agent header is set to tha
 
 **First wait.** When autohunt starts, the horn is first sounded 2s after it's available and without missing. To delay the first horn, set the value of the -w option to the time in minutes (from the time the script is started) the autohunt should wait.
 
-<br><br><hr />
+<br><hr />
 <a name="mhconsole"/>
 
 ## mhconsole.py
@@ -96,7 +96,7 @@ Most of the other functions work similarly to the above two examples.
 ### Antibot
 Both the 'info' and 'kr' commands involve checking for antibot. If antibot is found to be active, a (!) appears at the prompt until it's resolved. Mhconsole is not affected by antibot, in that all its functions are retained even while antibot is active. 
 
-<br><br><hr />
+<br><hr />
 <a name="shuffle"/>
 
 ## shuffle.py
