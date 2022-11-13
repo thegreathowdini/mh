@@ -80,7 +80,7 @@ If you set anything else as the value of ua, the User-Agent header is set to tha
 <a name="mhconsole"/>
 
 ## mhconsole.py
-This is intended to be a companion script to autohunt. It creates a CLI for interacting with the game, so you can do simple things like move or buy things between horns while autohunt is running, without going to the trouble of accessing the game in-browser.
+This is intended to be a companion script to autohunt. It creates a CLI for interacting with the game, so you can do things like solve KR or move between horns while autohunt is running, without going to the trouble of accessing the game in-browser.
 
 ### Logging in
 As with autohunt, you can login either using your MH username + password or an active session cookie. You can either modify the first few lines of the script to input your credentials, or submit them after mhconsole has started. If you choose the latter, mhconsole will start with an unauthenticated session. From here, enter 'help' to see your options
@@ -109,8 +109,7 @@ I think most of these are quite intuitive. For instance, 'info' shows you stuff 
 Most of the other functions work similarly to the above two examples.
 
 ### Antibot
-If antibot is found to be active (using either the 'info' or 'kr' command), a (!) appears at the prompt until it's resolved. Mhconsole is not affected by antibot, in that all its functions are retained even while antibot is active. 
-
+Both the 'info' and 'kr' commands involve checking for antibot. If antibot is found to be active, a (!) appears at the prompt until it's resolved. Mhconsole is not affected by antibot, in that all its functions are retained even while antibot is active. 
 
 <br><br><hr />
 <a name="shuffle"/>
