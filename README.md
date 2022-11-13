@@ -13,7 +13,10 @@ To run these scripts, you'll need python with the [requests library](https://pyp
 <a name="autohunt"/>
 
 ## autohunt.py
-This script automates some aspects of MH. It's most basic function is to sound the horn regularly. It also has options to automate things like travelling, changing the trap setup, buying and crafting things, etc., according to the requirements of some quests. 
+This script automates some aspects of MH. It's key functions are
+* automatically sounding the horn regularly
+* responding to antibot, including a bypass mode
+* automating trap setup changes according to the requirements of some quests.
 
 ### Basic usage
 Change the first few lines of the script to include some form of valid credentials (either username + password or an active session cookie), then run the script without arguments. If the credentials provided are valid, the script will start and sound the horn at 15-20 mins intervals continually until you abort it.
@@ -33,34 +36,18 @@ These parameters have default values of 15 mins, 300 secs, and .15 respectively 
 There are also preloaded sets of non-default values for convenience. Running autohunt with the -A option puts it in aggressive mode, in which the horn sounds roughly every 15 mins without missing. Running autohunt with the -P option puts it in paranoid mode, in which autohunt waits between half to one hour between horns and misses 20% of the time.
 
 ### King's reward
-When KR appears, in the default configuration, autohunt reports 'antibot triggered', downloads the KR image to your device, opens it automatically, then waits for input. From here, you have three options. If you just press enter at the prompt, autohunt opens the image again. If you enter 'url', the image url is printed. If you enter anything else, that's interpreted as an attempt to solve KR. If the code is correct, autohunt resumes.
+Autohunt has three possible antibot modes: standard, silent, and bypass. Standard mode is default.
+
+In standard mode, when KR appears, autohunt reports 'antibot triggered', downloads the KR image to your device, opens it automatically, then waits for input. From here, you have three options. If you just press enter at the prompt, autohunt opens the image again. If you enter 'url', the image url is printed. If you enter anything else, that's interpreted as an attempt to solve KR. If the code is correct, autohunt resumes.
 
 ![antibot](img/antibot.png)
 
-You can run autohunt in silent mode with -S, in which the KR image isn't opened automatically. Or, you can run autohunt in out-of-band mode, in which the script doesn't expect any input but simply refreshes the page at regular intervals checking to see if KR has been solved. Use the -O option to set the interval in secs between refreshes.
+You can run autohunt in silent mode with -S, in which the KR image isn't opened automatically. Or, you can run autohunt in bypass mode, in which autohunt simply reports whether KR is active, but runs as usual even if it is. If you notice that KR is active, you can resolve it via [mhconsole](#mhconsole).
 
 ### Cycles
-Running autohunt with one of the preset cycles will automate some game actions that might be taken between horns, usually according to the requirements of a quest. Choose the cycle with -C; and if there are options for that cycle, set them with -z.
+Running autohunt with one of the preset cycles will automate some game actions that might be taken between horns, usually according to the requirements of a quest. Choose the cycle with -C; and if there are options for that cycle, set them with -z. To see the options for each, run autohunt with 'list' as the -C value--autohunt will print the options and quit.
 
-|Cycle (-C)|Script actions|Requirements|Options (-z)|
-|---|---|---|---|
-|gnawnia|Town of gnawnia quest|None|None|
-|windmill|Windmill quest|Access to windmill|None|
-|harbour|Pirates quest|Access to harbour|None|
-|mountain|Mountain quest|Access to mountain<br>Charm conduit|None|
-|mousoleum|Catch mousevina|Access to laboratory<br>Shadow trap|None|
-|tree|Catch fairy/cherry/hydra mouse|Access to great gnarled tree|f: Aim for fairy<br>c: Aim for cherry<br>h: Aim for hydra|
-|furoma|Furoma cycle|Access to furoma<br>Tactical trap|integer: Number of onyx stone to keep|
-|burglar|Catch master burglar|Access to bazaar|None|
-|gauntlet|Hunt at highest possible level of gauntlet|Access to gauntlet|s: Use superbrie formula when using potions|
-|tribal|Tribal isles quests|For balack: access to balack's cove and forgotten trap<br>For dragon: access to dracano and draconic trap<br>For horde: access to jungle and shadow trap<br>For chieftians: access to isles and physical, tactical, and hydro traps|No options: Balack<br>d: Dragon<br>h: Horde<br>c: Chieftians|
-|digby|Catch big bad burroughs|Access to digby and laboratory|None|
-|toxic|Pollutinum quest|Access to toxic spill<br>Hydro trap|r: Refine whenever possible<br>c: Collect whenever possible|
-|iceberg|Go through iceberg, arming the best bases available|Access to iceberg|None|
-|zzt|Charge amplifier at garden, then hunt through zzt|Access to seasonal garden and zzt<br>Tactical trap|m: Aim for mystic team<br>t: Aim for technic team<br>d: Aim for double king<br>c: Aim for chess master<br>q: Use checkmate cheese when queen is next<br>s: Use superbrie formula when crafting checkmate cheese|
-|city|Claw shot city quest|Access to claw shot city|None|
-|fiery|Fiery warpath quest|Access to fiery warpath|None|
-|halloween|Halloween 2022 event<br>Hunt with highest level cheese.<br>Brew where possible; cheese before roots|Access to event location|r: Don't brew root<br>b: Don't use bonefort|
+![cycles](img/cycles.png)
 
 ### Other features
 **User-agent.** For stealthiness, autohunt tries to replicate the http headers that would have been sent with requests made from a browser. The User-Agent header is customisable, and you should choose the one corresponding to the browser on which you normally play MH. If you run autohunt with the -ua option set to these pre-defined values, the User-Agent header will be set accordingly:
@@ -73,8 +60,6 @@ Running autohunt with one of the preset cycles will automate some game actions t
 If you set anything else as the value of ua, the User-Agent header is set to that.
 
 **First wait.** When autohunt starts, the horn is first sounded 2s after it's available and without missing. To delay the first horn, set the value of the -w option to the time in minutes (from the time the script is started) the autohunt should wait.
-
-**Logging.** If you want to log the hunts made with autohunt, run autohunt with the -L option set to the location of the log file you want to use (it doesn't have to exist yet). Some stuff about each hunt will be logged to that file, and you can do whatever data stuff you want to with it.
 
 <br><br><hr />
 <a name="mhconsole"/>
