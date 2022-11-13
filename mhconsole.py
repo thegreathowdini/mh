@@ -19,22 +19,29 @@ import requests,json,re,os
 
 ########## LOGIN RELATED FUNCTIONS ##########
 def login_creds():
-    global cookie,hash,password,user
+    global cookie,hash,password,user,sn_user_id,cookies
     d = {'action':'loginHitGrab','username':username,'password':password}
     r = requests.post('https://www.mousehuntgame.com/managers/ajax/users/session.php',d,headers=post_headers)
-    try: cookie,hash,user = r.cookies['HG_TOKEN'], json.loads(r.text)['user']['unique_hash'], json.loads(r.text)['user']['username']
+    try: 
+        cookie,hash,user,sn_user_id = r.cookies['HG_TOKEN'], json.loads(r.text)['user']['unique_hash'], json.loads(r.text)['user']['username'], json.loads(r.text)['user']['sn_user_id']
+        cookies = {'HG_TOKEN':cookie}
     except: 
         print('[-] login failed')
         password = ''
        
 def login_cookie():
-    global hash,cookie,user
-    r = requests.get('https://www.mousehuntgame.com/camp.php',cookies={'HG_TOKEN':cookie},headers=get_headers)
-    try: hash,user = re.findall('"unique_hash":"([^"]*)"',r.text)[0], re.findall('"username":"([^"]*)"',r.text)[0]
-    except: 
+    global hash,cookie,user,sn_user_id,cookies
+    d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','login_token':cookie}
+    r = requests.post('https://www.mousehuntgame.com/api/action/passiveturn',d,headers=api_headers)
+    if r.status_code == 200:
+        j = json.loads(r.text)['user']
+        hash,user,sn_user_id = j['uh'], j['name'], j['sn_user_id']
+        cookies = {'HG_TOKEN':cookie}
+        return json.loads(r.text)
+    else:
         print('[-] cookie expired')
         cookie = ''
-    return 0
+        return None
 
 def try_login():
     if cookie: 
@@ -98,8 +105,8 @@ def postauth():
     help_msg = '''
 ========== GENERAL COMMANDS ==========
 horn\t\t\tsound the horn
-info\t\t\tshow account information
-info [type]\t\tshow subset of info. types: horn, gold, trap, login, loc(ation)
+info\t\t\tshow account and trap info
+unauth\t\t\tgo to preauth console without expiring session
 logout\t\t\texpire the current session
 exit\t\t\texit mhconsole
 
@@ -136,27 +143,36 @@ chest # [qty]\t\topen chest by s/n, qty times (default 1, 0 for max)
 pot\t\t\tshow all potions
 pot #\t\t\tshow recipes for potion by s/n
 pot # [rec] [qty]\tuse recipe [rec], [qty] times, for potion # (default 1 for qty, 0 for max)
+
+========== ANTIBOT ==========
+kr\t\t\tcheck antibot status
+kr url\t\t\tdisplay captcha url
+kr show\t\t\tdownload and show captcha image
+kr [code]\t\tsolve captcha
 '''
 
-    cmd = input('\nmh [%s] > '%user).strip()
+    cmd = input('\nmh [%s] %s> '%(user,'(!)' if antibot else '')).strip()
     cmd,args = cmd.split(' ')[0],cmd.split(' ')[1:]
     if cmd == 'help': return print(help_msg)
     elif not cmd: return 0
     elif cmd == 'logout': return logout()
+    elif cmd == 'unauth': 
+        hash,user = '',''
+        return print('[+] cookie removed from current console session')
     elif cmd == 'exit' or cmd == 'quit': exit_mhconsole()
-    elif cmd in ['horn','info','arm','move','buy','list','add','del','reset','show','run','hammer','chest','pot']: pass
+    elif cmd in ['horn','info','arm','move','buy','list','add','del','reset','show','run','hammer','chest','pot','kr']: pass
     else: return huh()
     
-    content = status_check()
+    content = login_cookie()
     while not content: 
-        print('[!] session expired, attempting to recover...')
         hash,user = '',''
         try_login()
         if not hash: return print('[-] will have to login manually')
-        content = status_check()
-    
-    if cmd == 'horn': horn(args)
-    elif cmd == 'info': info(args,content)
+        content = login_cookie()
+        print('')
+        
+    if cmd == 'horn': horn(content)
+    elif cmd == 'info': info()
     elif cmd == 'move': move(args)
     elif cmd == 'arm': arm(args)
     elif cmd == 'buy': buy(args)
@@ -164,23 +180,26 @@ pot # [rec] [qty]\tuse recipe [rec], [qty] times, for potion # (default 1 for qt
     elif cmd == 'hammer': hammer(args)
     elif cmd == 'chest': chest(args)
     elif cmd == 'pot': pot(args)
+    elif cmd == 'kr': kr(args)
     else: return huh()
         
-def horn(args): 
+def horn(content): 
     global horns
-    r = requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies,headers=get_headers).text
-    m = int(re.findall('"next_activeturn_seconds":(\d*)',r)[0])
+    lpt = content['user']['last_passiveturn_timestamp']
+    m = content['user']['next_activeturn_seconds']
     if m: return print('[-] too soon to sound. next horn in %s:%s'%(m//60,m%60))
     else:
-        d = {"uh":hash,"last_read_journal_entry_id":lrje,"hg_is_ajax":1,"sn":"Hitgrab"}
-        r = requests.post('https://www.mousehuntgame.com/managers/ajax/turns/activeturn.php',d,cookies=cookies,headers=post_headers)
-        if '"success":1' in r.text: 
-            print('[+] sounded the horn. response:')
-            horns += 1
-            try:
-                for e in json.loads(r.text)['journal_markup']:
-                    t = e['render_data']['text']
-                    for n in re.findall('<[^>]*>',t): t = t.replace(n,'')
+        horn_time = int(time.time())
+        d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','last_passiveturn_timestamp':lpt,'login_token':cookie}        
+        r = json.loads(requests.post('https://www.mousehuntgame.com/api/action/turn/me',d,headers=api_headers).text)
+        if r['success']: 
+            print('[+] successfully sounded the horn. response:\n')
+            d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','game_version':'v96087153','offset':0,'limit':72,'return_user':'true','login_token':cookie}        
+            r = json.loads(requests.post('https://www.mousehuntgame.com/api/get/journalentries/me',d,headers=api_headers).text)
+            for entry in r['entries']:
+                if entry['timestamp'] < horn_time: return
+                try: 
+                    t = entry['text']
                     s = t.index('!',10) if '!' in t[10:-2] else t.index('.')
                     if t[:s+1]: print('\t%s'%(t[:s+1].lstrip()))
                     if t[s+1:]:
@@ -188,43 +207,46 @@ def horn(args):
                         s = t.index('.',t.index('oz.')+3) if 'oz.' in t else t.index('.')
                         if t[:s+1]: print('\t%s'%(t[:s+1].lstrip()))
                         if t[s+1:]: print('\t%s'%(t[s+1:].lstrip()))
-            except: print('\t%s'%(t.lstrip()))
+                except: print('\t%s'%(t.lstrip()))
         else: print('[-] failed to sound the horn')
     
-def info(args,content): 
-    cmd = 'all' if not args else args[0]
-    if cmd == 'horn' or cmd == 'all':
-        next_horn = int(re.findall('"next_activeturn_seconds":(\d*)',content)[0])
-        next_horn = '%s:%s'%(next_horn//60,next_horn%60) if next_horn else 'READY'
-        print('HORN INFO\nsession horns:\t%s\nnext horn:\t%s\n'%(horns,next_horn))
-    if cmd == 'gold' or cmd == 'all':
-        gold = re.findall('"gold":(\d*)',content)[0]
-        points = re.findall('"points":(\d*)',content)[0]
-        print('WEALTH INFO\ngold:\t\t%s\npoints:\t\t%s\n'%(gold,points))
-    if cmd == 'trap' or cmd == 'all':
-        base = re.findall('"base_name":"([^"]*)"',content)[0]
-        weapon = re.findall('"weapon_name":"([^"]*)"',content)[0]
-        type = re.findall('"trap_power_type_name":"([^"]*)"',content)[0]
-        bait = re.findall('"bait_name":"([^"]*)"',content)
-        bait = bait[0] if bait else 'out of bait'
-        baitq = re.findall('"bait_quantity":(\d*)',content)[0]
-        power = re.findall('"trap_power":(\d*)',content)[0]
-        luck = re.findall('"trap_luck":(\d*)',content)[0]
-        freshness = re.findall('"trap_cheese_effect":"([^"]*)"',content)[0]
-        print('TRAP INFO\nbase:\t\t%s\nweapon:\t\t%s\ntype:\t\t%s\nbait:\t\t%s\nquantity:\t%s\npower:\t\t%s\nluck:\t\t%s\nfreshness:\t%s'%(base,weapon,type,bait,baitq,power,luck,freshness),end='')
-        try: 
-            charm = re.findall('"trinket_name":"([^"]*)"',content)[0]
-            charmq = re.findall('"trinket_quantity":(\d*)',content)[0]
-            print('\ncharm:\t\t%s\ncharm quantity:\t%s\n'%(charm,charmq))
-        except: print('\n')
-    if cmd == 'login' or cmd == 'all': print('LOGIN INFO\ncookie:\t\t%s\nhash:\t\t%s\n'%(cookie,hash))
-    if cmd == 'loc' or cmd == 'location' or cmd == 'all':
-        d = {'uh':hash}
-        j = json.loads(requests.post('https://www.mousehuntgame.com/managers/ajax/users/getmiceeffectiveness.php',d,cookies=cookies,headers=post_headers).text)
-        print('LOCATION INFO\nlocation:\t%s'%(j['location']))
-        j = j['effectiveness']
-        for k in j: print('{0:<12}\t{1}'.format(j[k]['difficulty']+':',', '.join([m['name'] for m in j[k]['mice']])))
-    if cmd not in ['all','horn','gold','trap','login','loc','location']: huh()
+def info():     
+    global antibot
+    content = requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies,headers=get_headers).text
+    antibot = 'The King has sent you a special reward' in content
+    
+    next_horn = int(re.findall('"next_activeturn_seconds":(\d*)',content)[0])
+    next_horn = '%s:%s'%(next_horn//60,next_horn%60) if next_horn else 'READY'
+    url = 'https://www.mousehuntgame.com/images/puzzleimage.php?snuid=%s&hash=%s'%(sn_user_id,hash)
+    print('HORN INFO\nnext horn:\t%s\nantibot:\t%s\n%s'%(next_horn,'ACTIVE' if antibot else 'inactive','KR url:\t\t%s\n'%url if antibot else ''))
+    
+    gold = re.findall('"gold":(\d*)',content)[0]
+    points = re.findall('"points":(\d*)',content)[0]
+    print('WEALTH INFO\ngold:\t\t%s\npoints:\t\t%s\n'%(gold,points))
+
+    base = re.findall('"base_name":"([^"]*)"',content)[0]
+    weapon = re.findall('"weapon_name":"([^"]*)"',content)[0]
+    type = re.findall('"trap_power_type_name":"([^"]*)"',content)[0]
+    bait = re.findall('"bait_name":"([^"]*)"',content)
+    bait = bait[0] if bait else 'out of bait'
+    baitq = re.findall('"bait_quantity":(\d*)',content)[0]
+    power = re.findall('"trap_power":(\d*)',content)[0]
+    luck = re.findall('"trap_luck":(\d*)',content)[0]
+    freshness = re.findall('"trap_cheese_effect":"([^"]*)"',content)[0]
+    print('TRAP INFO\nbase:\t\t%s\nweapon:\t\t%s\ntype:\t\t%s\nbait:\t\t%s\nquantity:\t%s\npower:\t\t%s\nluck:\t\t%s\nfreshness:\t%s'%(base,weapon,type,bait,baitq,power,luck,freshness),end='')
+    try: 
+        charm = re.findall('"trinket_name":"([^"]*)"',content)[0]
+        charmq = re.findall('"trinket_quantity":(\d*)',content)[0]
+        print('\ncharm:\t\t%s\ncharm quantity:\t%s\n'%(charm,charmq))
+    except: print('\n')
+    
+    print('LOGIN INFO\ncookie:\t\t%s\nhash:\t\t%s\n'%(cookie,hash))
+    
+    d = {'uh':hash}
+    j = json.loads(requests.post('https://www.mousehuntgame.com/managers/ajax/users/getmiceeffectiveness.php',d,cookies=cookies,headers=post_headers).text)
+    print('LOCATION INFO\nlocation:\t%s'%(j['location']))
+    j = j['effectiveness']
+    for k in j: print('{0:<12}\t{1}'.format(j[k]['difficulty']+':',', '.join([m['name'] for m in j[k]['mice']])))
     
 def move(args): 
     d = {'uh':hash,'page_class':'Travel'}
@@ -243,14 +265,14 @@ def move(args):
     if not args:
         for n in act:
             print('========== %s =========='%n)
-            print('NO.\tMH NAME\t\t\tCOMMON NAME')
-            for e in act[n]: print('{0:<3}\t{1:<20}\t{2:<25}'.format(e[0],e[1],e[2]))
+            print('NO.\tMH NAME\t\t\t\tCOMMON NAME')
+            for e in act[n]: print('{0:<3}\t{1:<30}\t{2:<25}'.format(e[0],e[1],e[2]))
             print('')
     elif args[0]=='all':
         for n in col:
             print('========== %s =========='%n)
-            print('NO.\tMH NAME\t\t\tCOMMON NAME\t\t\tACTIVE')
-            for e in col[n]: print('{0:<3}\t{1:<20}\t{2:<25}\t{3}'.format(e[0],e[1],e[2],e[3]))
+            print('NO.\tMH NAME\t\t\t\tCOMMON NAME\t\t\tACTIVE')
+            for e in col[n]: print('{0:<3}\t{1:<30}\t{2:<25}\t{3}'.format(e[0],e[1],e[2],e[3]))
             print('')
     else:
         for e in [x for n in col for x in col[n]]:
@@ -543,64 +565,44 @@ def pot(args):
         print('[+] %s'%t)
     else: print('[-] %s'%j['messageData']['popup']['messages'][0]['messageData']['body'])
     
- 
-########## REFRESH ##########
+def kr(args):
+    global antibot
+    if not args or not antibot or args[0] not in ['show','url']: antibot = 'The King has sent you a special reward' in requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies,headers=get_headers).text
+    
+    if not antibot: return print('[=] antibot inactive')
+    elif not args: return print('[!] antibot active')
+    elif len(args) > 1: return huh()
+    
+    url = 'https://www.mousehuntgame.com/images/puzzleimage.php?snuid=%s&hash=%s'%(sn_user_id,hash)
+    if args[0] == 'url': return print('[=] captcha url: %s'%url)
+    elif args[0] == 'show':        
+        with open('kingsreward.png','wb') as f: f.write(requests.get(url).content)
+        subprocess.run(['kingsreward.png'],shell=True,stderr=subprocess.DEVNULL)
+    elif len(args[0])!=5 or not args[0].isalnum(): return print('[-] code must be 5 alphanumeric characters')
+    else:
+        subprocess.run(['del','kingsreward.png'],shell=True,stderr=subprocess.DEVNULL)
+        d = {'puzzle_answer':args[0],'uh':hash}
+        r = requests.post('https://www.mousehuntgame.com/managers/ajax/users/solvePuzzle.php',d,cookies=cookies,headers=post_headers)
+        if 'Reward claimed!' in r.text: 
+            antibot = False
+            return print('[+] code correct')
+        elif 'Incorrect claim code, please try again' in r.text: print('[-] incorrect code. code is now different')
+        else: print('[-] something went wrong. check if code might have changed')
+
 def logout(): 
     global hash,cookie
     d = {'uh':hash,'action':'logout'}
     requests.post('https://www.mousehuntgame.com/managers/ajax/users/session.php',d,headers=post_headers,cookies=cookies)
     hash,user,cookie = '','',''
-    print('[+] logged out')
+    print('[+] cookie expired')
 
-def status_check():
-    global lrje
-    r = requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies,headers=get_headers)
-    if r.url == 'https://www.mousehuntgame.com/login.php': return 0
-    if 'The King has sent you a special reward' in r.text: 
-        antibot(r.text)
-        return status_check()
-    m = re.findall('lastReadJournalEntryId = (\d*);',r.text)
-    if m: lrje = m[0]
-    return r.text
-
-def antibot(text):
-    print('[!] antibot triggered')
-    help_msg = '''
-AVAILABLE COMMANDS:
-show\t\t\topen captcha image locally
-url\t\t\tprint captcha url
-logout\t\t\texpire this session
-exit\t\t\texit mhconsole
-anything else\t\tsubmit input as captcha code'''
-    while 1:
-        url = re.findall('<img src="([^"]*)" alt="King\'s Reward">',text)[0]
-        with open('kingsreward.png','wb') as f: f.write(requests.get(url).content)
-        while 1:
-            cmd = input('\nmh [%s] (antibot) > '%user).strip()
-            cmd = cmd.split(' ')[0]
-            if cmd == 'help': print(help_msg)
-            elif not cmd: continue
-            elif cmd == 'url': print('captcha url: %s'%url)
-            elif cmd == 'show': os.system('kingsreward.png')
-            elif cmd == 'logout': logout(args)
-            elif cmd == 'exit' or cmd == 'quit': exit_mhconsole()
-            elif len(cmd)==5 and cmd.isalnum(): break
-            else: print('[!] code must be 5 alphanumeric characters')
-        text = requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies,headers=get_headers).text
-        if 'The King has sent you a special reward' not in text: return print('[+] already solved\n')
-        os.system('del kingsreward.png')
-        d = {'puzzle_answer':cmd,'uh':hash}
-        r = requests.post('https://www.mousehuntgame.com/managers/ajax/users/solvePuzzle.php',d,cookies=cookies,headers=post_headers)
-        if 'Reward claimed!' in r.text: return print('[+] code correct\n')
-        elif 'Incorrect claim code, please try again' in r.text: print('[-] incorrect code. code is now different')
-        else: print('[-] something went wrong. check if code might have changed')
-        text = requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies,headers=get_headers).text
 
 useragent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0'
-user,hash,lrje,horns = '','',0,0
 post_headers = {'Accept': 'application/json, text/javascript, */*; q=0.01', 'Accept-Language': 'en-GB,en;q=0.5', 'Connection': 'keep-alive', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-origin', 'TE': 'trailers', 'User-Agent': useragent}
 get_headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8', 'Accept-Language': 'en-GB,en;q=0.5', 'Connection': 'keep-alive', 'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-User': '1', 'TE': 'trailers', 'Upgrade-Insecure-Requests': '1', 'User-Agent': useragent}
-table = {}
+api_headers = {'Accept': 'application/json, text/javascript, */*; q=0.01', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Origin': 'file://', 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'}
+user,hash,sn_user_id,antibot = '','','',False
+table,cookies = {},{}
 
 try: cookie = cookie
 except: cookie = ''
@@ -610,7 +612,4 @@ except: username,password = '',''
 if cookie or (username and password): try_login()
 while 1:
     if not hash: preauth()
-    else: 
-        cookies = {'HG_TOKEN':cookie}
-        postauth()
-
+    else: postauth()
