@@ -109,17 +109,9 @@ I think most of these are quite intuitive. For instance, 'info' shows you stuff 
 Most of the other functions work similarly to the above two examples.
 
 ### Antibot
-If KR is triggered, mhconsole suspends until it's solved. You'll see '(antibot)' at the prompt. From here, the options are pretty much the same as with autohunt:
+If antibot is found to be active (using either the 'info' or 'kr' command), a (!) appears at the prompt until it's resolved. Mhconsole is not affected by antibot, in that all its functions are retained even while antibot is active. 
 
-![consoleantibot](img/consoleantibot.png)
 
-Anything else you type other than 'show', 'url', 'logout', 'exit', or 'quit' will be interpreted as an attempt to solve KR. The script will make sure it's 5 alnum chars before submitting. If the code is correct, mhconsole will resume by executing the last command you gave before KR was triggered.
-
-If you're running mhconsole simultaneously with autohunt, there's a chance KR will be solved via autohunt while mhconsole is in antibot mode. If that's the case, you can get mhconsole to exit antibot mode by entering any 5 alnum chars at the prompt. 
-
-![consolerace](img/consolerace.png)
-
-The reason this is necessary is because I didn't want mhconsole to request the page too often while in antibot mode, since that's an indicator of botting. So it only sends requests when you input something that can be submitted as a KR code.
 <br><br><hr />
 <a name="shuffle"/>
 
