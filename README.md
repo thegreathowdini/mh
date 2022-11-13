@@ -23,7 +23,7 @@ Change the first few lines of the script to include some form of valid credentia
 
 ![basic](img/basic.png)
 
-On successful login, the session cookie is printed to the console. For stealthiness, it's advisable to save the cookie value in the script so that the script logs in using the cookie next time instead of a password--the former is more similar to non-bot behaviour.
+On successful login, the session cookie is printed to the console. For stealth, it's advisable to save the cookie value in the script so that the script logs in using the cookie next time instead of a password--the former is more similar to non-bot behaviour.
 
 ### Parameters
 Three parameters govern the rate at which the horn is sounded.
@@ -50,7 +50,7 @@ Running autohunt with one of the preset cycles will automate some game actions t
 ![cycles](img/cycles.png)
 
 ### Other features
-**User-agent.** For stealthiness, autohunt tries to replicate the http headers that would have been sent with requests made from a browser. The User-Agent header is customisable, and you should choose the one corresponding to the browser on which you normally play MH. If you run autohunt with the -ua option set to these pre-defined values, the User-Agent header will be set accordingly:
+**User-agent.** For stealth, autohunt tries to replicate the http headers that would have been sent with requests made from a browser. The User-Agent header is customisable, and you should choose the one corresponding to the browser on which you normally play MH. If you run autohunt with the -ua option set to these pre-defined values, the User-Agent header will be set accordingly:
 * 'firefox': firefox on windows (this is the default value)
 * 'chrome': chrome on windows
 * 'edge': edge on windows
