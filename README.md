@@ -94,7 +94,7 @@ I think most of these are quite intuitive. For instance, 'info' shows you stuff 
 Most of the other functions work similarly to the above two examples.
 
 ### Antibot
-Both the 'info' and 'kr' commands involve checking for antibot. If antibot is found to be active, a (!) appears at the prompt until it's resolved. Mhconsole is not affected by antibot, in that all its functions are retained even while antibot is active. 
+Both the 'info' and 'kr' commands involve checking for antibot. If antibot is found to be active, a (!) appears at the prompt until it's resolved. Mhconsole is not affected by antibot, in that all its functions (including sounding the horn) are retained even while antibot is active. 
 
 <br><hr />
 <a name="shuffle"/>
