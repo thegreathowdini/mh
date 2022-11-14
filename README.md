@@ -1,6 +1,6 @@
 # mousehunt scripts
 
-A couple of scripts to help with [Mousehunt](https://www.mousehuntgame.com/).<br>
+A couple of python scripts to help with [Mousehunt](https://www.mousehuntgame.com/).<br>
 * [autohunt.py](#autohunt)--A script to automate some aspects of MH.
 * [mhconsole.py](#mhconsole)--A console-like interface for interacting with the game.
 * [shuffle.py](#shuffle)--A small script to automate solving Spooky Shuffle in MH's Halloween 2022 event.
@@ -15,8 +15,8 @@ To run these scripts, you'll need python with the [requests library](https://pyp
 ## autohunt.py
 This script automates some aspects of MH. It's key functions are
 * automatically sounding the horn regularly
-* responding to antibot, including a bypass mode
-* automating trap setup changes according to the requirements of some quests.
+* detecting and bypassing antibot
+* changing the trap setup according to the requirements of some quests.
 
 ### Basic usage
 Change the first few lines of the script to include some form of valid credentials (either username + password or an active session cookie), then run the script without arguments. If the credentials provided are valid, the script will start and sound the horn at 15-20 mins intervals continually until you abort it.
