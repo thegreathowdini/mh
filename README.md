@@ -59,7 +59,7 @@ Running autohunt with one of the preset cycles will automate some game actions t
 
 If you set anything else as the value of ua, the User-Agent header is set to that.
 
-**First wait.** When autohunt starts, the horn is first sounded 2s after it's available and without missing. To delay the first horn, set the value of the -w option to the time in minutes (from the time the script is started) the autohunt should wait.
+**First wait.** When autohunt starts, the horn is first sounded 2s after it's available and without missing. To delay the first horn, set the value of the -w option to the time in minutes (from the time the script is started) that autohunt should wait.
 
 <br><hr />
 <a name="mhconsole"/>
