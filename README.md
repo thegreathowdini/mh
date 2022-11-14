@@ -1,13 +1,13 @@
-# mousehunt scripts
+# MH scripts
 
-A couple of python scripts to help with [Mousehunt](https://www.mousehuntgame.com/).<br>
+A couple of python scripts to help with [MH](https://www.mousehuntgame.com/).<br>
 * [autohunt.py](#autohunt)--A script to automate some aspects of MH.
 * [mhconsole.py](#mhconsole)--A console-like interface for interacting with the game.
 * [shuffle.py](#shuffle)--A small script to automate solving Spooky Shuffle in MH's Halloween 2022 event.
 
 To run these scripts, you'll need python with the [requests library](https://pypi.org/project/requests/).
 
-*The use of any of these scripts is against [Mousehunt's rules](https://hitgrab.helpshift.com/hc/en/3-mousehunt/faq/44-scripts-auto-clickers-and-software).* The usual disclaimers follow.
+*The use of any of these scripts is against [MH's rules](https://hitgrab.helpshift.com/hc/en/3-mousehunt/faq/44-scripts-auto-clickers-and-software).* The usual disclaimers follow.
 
 <hr />
 <a name="autohunt"/>
