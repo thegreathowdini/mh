@@ -1,6 +1,6 @@
 # MH scripts
 
-A couple of python scripts to help with [MH](https://www.mousehuntgame.com/).<br>
+A couple of python scripts to help with MH.<br>
 * [autohunt.py](#autohunt)--A script to automate some aspects of MH.
 * [mhconsole.py](#mhconsole)--A console-like interface for interacting with the game.
 * [shuffle.py](#shuffle)--A small script to automate solving Spooky Shuffle in MH's Halloween 2022 event.
