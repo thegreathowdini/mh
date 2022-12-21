@@ -10,11 +10,14 @@ miss_chance = .15
 
 
 ########## CODE BEGINS HERE ##########
-import requests,time,random,datetime,json,re,argparse,subprocess
-max_fail = 2
+import requests,time,random,datetime,json,re,argparse,subprocess,functools
+max_fail,timeout = 2,30
+
+requests.get = functools.partial(requests.get,timeout=timeout)
+requests.post = functools.partial(requests.post,timeout=timeout)
 
 ##### ARGUMENT HANDLING #####
-defined_cycles = ['gnawnia','windmill','harbour','mountain','mousoleum','tree','furoma','burglar','digby','toxic','gauntlet','tribal','iceberg','zzt','city','train','fiery','halloween']
+defined_cycles = ['gnawnia','windmill','harbour','mountain','mousoleum','tree','furoma','burglar','digby','toxic','gauntlet','tribal','iceberg','zzt','city','train','fiery','garden','fort','halloween','xmas']
 
 p = argparse.ArgumentParser()
 p.add_argument('-A',action='store_true',help='aggressive mode: interval=15 mins, miss_probability=0, randomness=10')
@@ -29,6 +32,7 @@ p.add_argument('-R',help='antibot refresh rate (default 20)')
 p.add_argument('-C',help='follow preset cycle. \'list\' for options')
 p.add_argument('-ua',help='user agent string. preset options: firefox (default), chrome, edge, mac, iphone')
 p.add_argument('-z',help='cycle parameters')
+p.add_argument('-a',action='store_true',help='minimal mode')
 args = p.parse_args()
 
 if args.C == 'list':
@@ -53,7 +57,10 @@ if args.C == 'list':
     ('city','claw shot city quest','access to claw shot city + law trap','None'),
     ('train','train quest','ongoing train quest + law trap',[('s','smuggle items instead of submitting'),('f','don\'t spend fools gold')]),
     ('fiery','desert warpath quest','access to fiery warpath',[('g','go for gargantua at streak 8+'),('integer','streak at which to go for commander')]),
+    ('garden','living garden quest','access to living garden + hydro/arcane/shadow traps','None'),
+    ('fort','fort rox quest','access to fort rox + ??? traps','None'),
     ('halloween','halloween 2022','access to event location',[('r','don\'t brew root'),('b','don\'t use bonefort')]),
+    ('xmas','xmas 2022','access to event location',[('g','use glazed pecan if available'),('p','don\'t use pecan'),('c','use snowball charms with xmas base'),('h','stay at hill'),('w','stay at workshop'),('f','stay at fortress')]),
     ]
     for c in d: print('{4}{0:<10}\t{1:<30}\t{2:<60}\t{3}'.format(c[0],c[1],c[2],'\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t'.join('%s: %s'%(p[0],p[1]) for p in c[3]) if c[3] != 'None' else c[3],'\n' if c[0] else ''))
     print('')
@@ -65,6 +72,10 @@ if args.A and args.P:
 if args.A: interval,miss_chance,randomness = 15,0,10
 elif args.P: interval,miss_chance,randomness = 30,.2,1800
 
+if args.a and args.C: 
+    print('Cycles cannot be used with minimal mode')
+    quit()
+
 try:
     if args.i: interval = float(args.i)
     if args.m: miss_chance = float(args.m)
@@ -75,7 +86,7 @@ except:
     quit()
 cycle = args.C if args.C in defined_cycles else ''
 args.z = args.z if args.z else ''
-antibot_mode = 'silent' if args.s else 'bypass' if args.b else 'standard'
+antibot_mode = 'silent' if args.s else 'bypass' if args.b or args.a else 'standard'
 
 if args.ua == 'firefox' or not args.ua: useragent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0'
 elif args.ua == 'chrome': useragent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.3'
@@ -84,7 +95,7 @@ elif args.ua == 'iphone': useragent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_4_1
 elif args.ua == 'edge': useragent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36 Edge/100.0.1185.39'
 else: useragent = args.ua
 
-print('[%s] starting autohunt. cycle: %s, interval: %s, miss_prob: %s, randomness: %s, refresh rate: %s, antibot: %s'%(datetime.datetime.now().replace(microsecond=0),cycle if cycle else 'none',interval,miss_chance,randomness,refresh_rate,antibot_mode))
+print('[%s] starting autohunt. %sinterval: %s, miss_prob: %s, randomness: %s, antibot: %s%s'%(datetime.datetime.now().replace(microsecond=0),'minimal mode. ' if args.a else 'cycle: %s, '%(cycle if cycle else 'none'),interval,miss_chance,randomness,antibot_mode,', refresh: %s'%refresh_rate if antibot_mode=='bypass' and not args.a else ''))
 
 ##### AUTHENTICATION #####
 def login():
@@ -106,7 +117,7 @@ try: cookie = cookie
 except: cookie = ''
 try: username,password = username,password
 except: username,password = '',''
-hash,horns,antibot_triggered,allowed_regions,lpt,sn_user_id,lrje = '',0,False,[],0,'',0
+hash,horns,antibot_triggered,allowed_regions,lpt,sn_user_id,lrje,latency = '',0,False,[],0,'',0,0
 post_headers = {'Accept': 'application/json, text/javascript, */*; q=0.01', 'Accept-Language': 'en-GB,en;q=0.5', 'Connection': 'keep-alive', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-origin', 'TE': 'trailers', 'User-Agent':useragent}
 get_headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8', 'Accept-Language': 'en-GB,en;q=0.5', 'Connection': 'keep-alive', 'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-Site': 'none', 'Sec-Fetch-User': '1', 'TE': 'trailers', 'Upgrade-Insecure-Requests': '1', 'User-Agent':useragent}
 api_headers = {'Accept': 'application/json, text/javascript, */*; q=0.01', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Origin': 'file://', 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'}
@@ -134,7 +145,10 @@ def choose_cycle():
     elif cycle == 'city': city()
     elif cycle == 'train': train()
     elif cycle == 'fiery': fiery()
+    elif cycle == 'garden': garden()
+    elif cycle == 'fort': fort()
     elif cycle == 'halloween': halloween()
+    elif cycle == 'xmas': xmas()
     
 def travel(dest): requests.post('https://www.mousehuntgame.com/managers/ajax/users/changeenvironment.php',{'uh':hash,'destination':dest},headers=post_headers,cookies=cookies)
 def arm_bait(bait): requests.post('https://www.mousehuntgame.com/managers/ajax/users/changetrap.php',{'uh':hash,'bait':bait},headers=post_headers,cookies=cookies)
@@ -167,6 +181,7 @@ def prologue():
         
     baits = {l['type']: l['quantity'] for l in j['components'] if l['classification']=='bait' and 'quantity' in l.keys()}
     crafts = {l['type']:l['quantity'] for l in j['components'] if l['classification']=='crafting_item' and 'quantity' in l.keys()}
+    stats = {l['type']:l['quantity'] for l in j['components'] if l['classification']=='stat' and 'quantity' in l.keys()}
     trinkets = {l['type']: l['quantity'] for l in j['components'] if l['classification']=='trinket' and 'quantity' in l.keys()}
     potions = {l['type']:l['quantity'] for l in j['components'] if l['classification']=='potion' and 'quantity' in l.keys()}
     bases = [c['type'] for c in j['components'] if c['classification']=='base']
@@ -178,18 +193,18 @@ def prologue():
     best_base = max([c for c in j['components'] if c['classification']=='base'],key=lambda x:x['power'] if 'power' in x else 0)['type']
     best_weapon = max([c for c in j['components'] if c['classification']=='weapon'],key=lambda x:x['power'] if 'power' in x else 0)['type']
 
-    return current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j
+    return current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j
         
 ##### CYCLES #####
 def template(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_location = ''
     target_base,target_weapon,target_bait,target_trinket = '','','',''
     
     if target_location not in allowed_regions: return print('[%s] [%s] no access to LOCATION. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if current_location != target_location:
         travel(target_location)
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     
     if target_base or target_weapon or target_bait or target_trinket:
         if target_base and current_base != target_base: arm_base(target_base)
@@ -202,10 +217,10 @@ def template(loop_counter=0):
     else: template(loop_counter+1)
         
 def gnawnia(loop_counter=0): 
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     if current_location != 'town_of_gnawnia':
         travel('town_of_gnawnia')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_bait = ''
     if j['user']['quests']['QuestTownOfGnawnia']['state'] == 'allBountiesComplete': return print('[%s] [%s] all bounties complete'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     elif j['user']['quests']['QuestTownOfGnawnia']['can_accept'] == 'active': requests.post('https://www.mousehuntgame.com/managers/ajax/environment/town_of_gnawnia.php',{'uh':hash,'action':'accept_bounty'},headers=post_headers,cookies=cookies)
@@ -222,11 +237,11 @@ def gnawnia(loop_counter=0):
     else: gnawnia(loop_counter+1)    
 
 def windmill():
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()    
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()    
     if 'windmill' not in allowed_regions: return print('[%s] [%s] no access to windmill. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if current_location != 'windmill':
         travel('windmill')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     num_cheese = int(j['user']['quests']['QuestWindmill']['items']['grilled_cheese']['quantity'])
     num_flour = int(j['user']['quests']['QuestWindmill']['items']['flour_stat_item']['quantity'])
     if num_cheese: 
@@ -238,7 +253,7 @@ def windmill():
     else: print('[%s] [%s] getting flour: have %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),num_flour))
 
 def harbour():
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     if 'harbour' not in allowed_regions: return print('[%s] [%s] no access to harbour. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if current_weapon != best_weapon: arm_weapon(best_weapon)
     if current_bait != 'brie_cheese':
@@ -246,7 +261,7 @@ def harbour():
         arm_bait('brie_cheese')
     if current_location != 'harbour':
         travel('harbour')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     if 'QuestHarbour' not in j['user']['quests']: return print('[%s] [%s] harbour quest not active. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if j['user']['quests']['QuestHarbour']['status'] == 'searchStarted' and j['user']['quests']['QuestHarbour']['can_claim_status'] == 'active':
         requests.post('https://www.mousehuntgame.com/managers/ajax/environment/harbour.php',{'action':'claimBooty','uh':hash},headers=post_headers,cookies=cookies)
@@ -254,12 +269,12 @@ def harbour():
         requests.post('https://www.mousehuntgame.com/managers/ajax/environment/harbour.php',{'action':'beginSearch','uh':hash},headers=post_headers,cookies=cookies)
         
 def mountain(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_bait = ''    
     if 'mountain' not in allowed_regions: return print('[%s] [%s] no access to mountain. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if current_location != 'mountain':
         travel('mountain')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     
     if 'QuestMountain' not in j['user']['quests']: return print('[%s] [%s] mountain quest unavailable. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if 'power_trinket' not in trinkets or trinkets['power_trinket'] <= 5: buy('power_trinket',5)
@@ -286,7 +301,7 @@ def mountain(loop_counter=0):
     else: mountain(loop_counter+1)
 
 def mousoleum(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_bait,target_location,target_weapon = '','',''
     
     if 'laboratory' not in allowed_regions: return print('[%s] [%s] no access to laboratory. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
@@ -302,7 +317,7 @@ def mousoleum(loop_counter=0):
     else:         
         if current_location != 'mousoleum':
             travel('mousoleum')
-            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
         if j['user']['quests']['QuestMousoleum']['has_wall']:
             if j['user']['quests']['QuestMousoleum']['wall_health'] <= 20 and int(j['user']['quests']['QuestMousoleum']['items']['mousoleum_wall_stat_item']['quantity']): requests.post('https://www.mousehuntgame.com/managers/ajax/environment/mousoleum.php',{'action':'repair_wall','uh':hash},cookies=cookies,headers=post_headers)
             elif 'crimson_cheese' in baits: 
@@ -327,7 +342,7 @@ def mousoleum(loop_counter=0):
     else: mousoleum(loop_counter+1)       
 
 def tree(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_location,target_weapon,target_bait = '',best_weapons['Tactical'] if 'Tactical' in best_weapons else best_weapon  ,''
     
     if 'great_gnarled_tree' not in allowed_regions: return print('[%s] [%s] no access to tree. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
@@ -362,7 +377,7 @@ def tree(loop_counter=0):
     else: tree(loop_counter+1)
 
 def furoma(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_bait = ''
     
     if 'dojo' not in allowed_regions: return print('[%s] [%s] no access to furoma. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
@@ -437,7 +452,7 @@ def furoma(loop_counter=0):
     else: furoma(loop_counter+1)
 
 def burglar(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()    
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()    
     if 'bazaar' not in allowed_regions: return print('[%s] [%s] no access to bazaar. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if 'brie_cheese' not in baits or baits['brie_cheese'] < 10: buy('brie_cheese',10)
     target_bait = 'gilded_cheese' if 'gilded_cheese' in baits else 'brie_cheese'    
@@ -447,7 +462,7 @@ def burglar(loop_counter=0):
     print('[%s] [%s] hunting with %s: %s left'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),target_bait.replace('_',' '),baits[target_bait]))
 
 def gauntlet(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_bait,target_weapon = '',''
     
     if 'kings_gauntlet' not in allowed_regions: return print('[%s] [%s] no access to gauntlet. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
@@ -500,7 +515,7 @@ def gauntlet(loop_counter=0):
     else: gauntlet(loop_counter+1)
 
 def tribal(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_weapon, target_bait, target_location, target_item = '','','',''
     
     if 'nerg_plains' not in allowed_regions: return print('[%s] [%s] no access to tribal isles. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
@@ -627,7 +642,7 @@ def tribal(loop_counter=0):
     else: tribal(loop_counter+1)
     
 def digby(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_weapon, target_location, target_bait, target_base, target_trinket = '','','','',''
     
     if 'laboratory' not in allowed_regions: return print('[%s] [%s] no access to laboratory. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
@@ -663,13 +678,22 @@ def digby(loop_counter=0):
     else: digby(loop_counter+1)
 
 def toxic(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
-    target_weapon, target_location, target_bait, target_base = '','','',''
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    target_weapon, target_location, target_bait, target_base, target_trinket = '','','','',''
     if 'brie_cheese' not in baits or baits['brie_cheese'] < 30: buy('brie_cheese',30)
     
     if 'pollution_outbreak' not in allowed_regions: return print('[%s] [%s] no access to toxic spill. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if 'Hydro' not in best_weapons: return print('[%s] [%s] no hydro trap. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     done,rank_diff = 0,[]
+    
+    if 'radioactive_sludge_craft_item' in crafts and 'radioactive_curd_crafting_item' in crafts and crafts['radioactive_curd_crafting_item'] >= 2:
+        num = min(crafts['radioactive_curd_crafting_item']//2,crafts['radioactive_sludge_craft_item'])
+        if 'ionized_salt_craft_item' not in crafts or crafts['ionized_salt_craft_item'] < num: 
+            #if 'laboratory' != current_location: travel('laboratory')
+            buy('ionized_salt_craft_item',num)
+        craft({'ionized_salt_craft_item':1,'radioactive_sludge_craft_item':1,'radioactive_curd_crafting_item':2},qty=num)
+    if 'super_radioactive_blue_potion' in potions and 'radioactive_blue_cheese' in baits and baits['radioactive_blue_cheese'] >= 6: potion('super_radioactive_blue_potion',get_recipes(j,'super_radioactive_blue_potion')[1],qty=min(potions['super_radioactive_blue_potion'],baits['radioactive_blue_cheese']//6))
+    
     if 'super_radioactive_blue_cheese' in baits or 'magical_radioactive_blue_cheese' in baits:
         k = json.loads(requests.post('https://www.mousehuntgame.com/managers/ajax/pages/page.php',{'uh':hash,'page_class':'Travel'},cookies=cookies,headers=post_headers).text)
         ranks = ['Hero','Knight','Lord/Lady','Baron/Baroness','Count/Countess','Duke/Duchess','Grand Duke/Grand Duchess','Archduke/Archduchess']
@@ -679,7 +703,7 @@ def toxic(loop_counter=0):
         else:
             if current_location != 'pollution_outbreak':
                 travel('pollution_outbreak')
-                current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+                current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
             j = j['user']['quests']['QuestPollutionOutbreak']
             done,target_location,target_weapon,target_base = 1,'pollution_outbreak',best_weapons['Hydro'],best_base
             mp,rs,rq,rp,cp = j['max_pollutinum'],j['refine_status'],j['refine_quantity'],j['refined_pollutinum'],j['items']['crude_pollutinum_stat_item']['quantity'] if 'crude_pollutinum_stat_item' in j['items'] else 0
@@ -689,18 +713,13 @@ def toxic(loop_counter=0):
                 rs = 'default' if rs == 'active' else 'active'
             
             if 'magical_radioactive_blue_cheese' in baits: target_bait = 'magical_radioactive_blue_cheese'
-            elif 'super_radioactive_blue_cheese' in baits: target_bait = 'super_radioactive_blue_cheese'
+            else: target_bait = 'super_radioactive_blue_cheese'
+            if rs == 'active': target_trinket = 'super_staling_trinket' if 'super_staling_trinket' in trinkets else 'staling_trinket' if 'staling_trinket' in trinkets else None
+            else: target_trinket = 'super_soap_trinket' if 'super_soap_trinket' in trinkets else 'soap_trinket' if 'soap_trinket' in trinkets else None
             
             print('[%s] [%s] hunting at spill with %s. bait left: %s, mode: %s, crude: %s, refined: %s. '%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),'magical' if target_bait=='magical_radioactive_blue_cheese' else 'rancid',baits[target_bait],'collecting' if rs == 'default' or rs == 'disabled' else 'refining',cp, rp))
                 
     if done: pass
-    elif 'super_radioactive_blue_potion' in potions and 'radioactive_blue_cheese' in baits and baits['radioactive_blue_cheese'] >= 6: potion('super_radioactive_blue_potion',get_recipes(j,'super_radioactive_blue_potion')[1],qty=min(potions['super_radioactive_blue_potion'],baits['radioactive_blue_cheese']//6))
-    elif 'radioactive_sludge_craft_item' in crafts and 'radioactive_curd_crafting_item' in crafts and crafts['radioactive_curd_crafting_item'] >= 2:
-        num = min(crafts['radioactive_curd_crafting_item']//2,crafts['radioactive_sludge_craft_item'])
-        if 'ionized_salt_craft_item' not in crafts or crafts['ionized_salt_craft_item'] < num: 
-            if 'laboratory' != current_location: travel('laboratory')
-            buy('ionized_salt_craft_item',num)
-        craft({'ionized_salt_craft_item':1,'radioactive_sludge_craft_item':1,'radioactive_curd_crafting_item':2},qty=num)    
     elif 'radioactive_sludge_craft_item' in crafts and 'radioactive_blue_cheese' in baits and baits['radioactive_blue_cheese'] >= 2: hammer('radioactive_blue_cheese',min(crafts['radioactive_sludge_craft_item'],baits['radioactive_blue_cheese']//2)*2)
     elif 'super_radioactive_blue_potion' not in potions and 'radioactive_blue_cheese' in baits:
         target_location, target_bait, target_weapon, target_base = 'mountain', 'radioactive_blue_cheese', best_weapons['Physical'], 'explosive_base'
@@ -716,19 +735,20 @@ def toxic(loop_counter=0):
         if target_bait and target_bait != current_bait: arm_bait(target_bait)
         if target_weapon and target_weapon != current_weapon: arm_weapon(target_weapon)
         if target_base and target_base != current_base: arm_base(target_base)
+        if target_trinket != current_trinket: arm_charm(target_trinket if target_trinket else 'disarm')
     elif loop_counter > 5: 
         print('looped too many times. quitting!')
         quit()
     else: toxic(loop_counter+1)
 
 def iceberg():
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     
     if 'iceberg' not in allowed_regions: return print('[%s] [%s] no access to iceberg. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     
     if current_location != 'iceberg':
         travel('iceberg')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     progress = int(j['user']['quests']['QuestIceberg']['user_progress'])
     turns = j['user']['quests']['QuestIceberg']['turns_taken']
     
@@ -767,7 +787,7 @@ def iceberg():
 
 def zzt_parse(i): return 'not trying' if i < 0 else 'done' if i > 15 else 'got queen' if i > 14 else 'got %s rook%s'%(i-12,'s' if i-13 else '') if i > 12 else 'got %s bishop%s'%(i-10,'s' if i-11 else '') if i > 10 else 'got %s knight%s'%(i-8,'s' if i-9 else '') if i > 8 else 'got %s pawn%s'%(i,'' if i == 1 else 's')
 def zzt():
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_bait, target_weapon, target_trinket, target_base = '','','',''
     
     if 'seasonal_garden' not in allowed_regions: return print('[%s] [%s] no access to zzt. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
@@ -775,7 +795,7 @@ def zzt():
     
     if current_location not in ['seasonal_garden','zugzwang_tower']:
         travel('seasonal_garden')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     amplifier, maxamp = int(j['user']['viewing_atts']['zzt_amplifier']), int(j['user']['viewing_atts']['zzt_max_amplifier'])
     if 'gouda_cheese' not in baits or baits['gouda_cheese'] <= 10: buy('gouda_cheese',100)
     
@@ -791,7 +811,7 @@ def zzt():
     if amplifier == maxamp or (current_location == 'zugzwang_tower' and amplifier):
         if current_location != 'zugzwang_tower': 
             travel('zugzwang_tower')
-            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
         tech_progress, mage_progress = int(j['user']['viewing_atts']['zzt_tech_progress']), int(j['user']['viewing_atts']['zzt_mage_progress'])
         target_base = best_base if amplifier < 60 or 'wooden_base_with_target' not in bases else 'wooden_base_with_target'
         
@@ -815,7 +835,7 @@ def zzt():
     else: 
         if current_location != 'seasonal_garden': 
             travel('seasonal_garden')
-            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
         season = j['user']['viewing_atts']['season']
         
         target_base = best_base
@@ -834,12 +854,12 @@ def zzt():
     if current_trinket != target_trinket: arm_charm(target_trinket if target_trinket else 'disarm')
 
 def city():
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     if 'claw_shot_city' not in allowed_regions: return print('[%s] [%s] no access to claw shot city. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if 'Law' not in best_weapons: return print('[%s] [%s] no law trap. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if current_location != 'claw_shot_city': 
         travel('claw_shot_city')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     if current_base != best_base: arm_base(best_base)
     if current_weapon != best_weapons['Law']: arm_weapon(best_weapons['Law'])
     if 'brie_cheese' not in baits or baits['brie_cheese'] < 20: buy('brie_cheese',30)
@@ -854,14 +874,14 @@ def city():
     if 'bounty_reward_f_convertible' in chests: requests.post('https://www.mousehuntgame.com/managers/ajax/users/useconvertible.php',{'item_type':'bounty_reward_f_convertible','uh':hash,'item_qty':1},headers=post_headers,cookies=cookies)
     
 def train():
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_weapon,target_trinket = best_weapons['Law'],''
     
     if 'Law' not in best_weapons: return print('[%s] [%s] no law trap. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if 'train_station' not in allowed_regions: return print('[%s] [%s] no access to train station. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if current_location != 'train_station':
         travel('train_station')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     if 'QuestTrainStation' not in j['user']['quests'] or not j['user']['quests']['QuestTrainStation']['on_train']: return print('[%s] [%s] no train quest active. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if 'brie_cheese' not in baits or baits['brie_cheese'] < 20: buy('brie_cheese',30)
     if current_bait != 'brie_cheese': arm_bait('brie_cheese')
@@ -923,14 +943,14 @@ def train():
     if target_trinket != current_trinket: arm_charm(target_trinket if target_trinket else 'disarm')
         
 def fiery(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     target_weapon,target_trinket = '',''
     commander_threshold = int(''.join([c for c in '0'+args.z if c.isdigit()]))
     
     if 'desert_warpath' not in allowed_regions: return print('[%s] [%s] no access to fiery warpath. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if current_location != 'desert_warpath':
         travel('desert_warpath')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     if 'gouda_cheese' not in baits or baits['gouda_cheese'] < 20: buy('gouda_cheese',20)
     if current_bait != 'gouda_cheese': arm_bait('gouda_cheese')
     if current_base != best_base: arm_base(best_base)
@@ -949,22 +969,23 @@ def fiery(loop_counter=0):
         buy('charmbit_crafting_item',2*num)
         buy('ionized_salt_craft_item',num)
         craft({'heatproof_mage_cloth_crafting_item':1,'simple_orb_crafting_item':1,'ionized_salt_craft_item':1,'charmbit_crafting_item':2},num)
-    elif commander_threshold and streak >= commander_threshold: target,target_weapon,target_trinket = 'commander',best_weapon,'super_flame_march_general_trinket' if 'super_flame_march_general_trinket' in trinkets else 'flame_march_general_trinket'
-    elif streak > (7 if 'g' in args.z else 9): target,target_weapon,target_trinket = 'gargantua',best_weapons['Draconic'],None
+    
+    if commander_threshold and streak >= commander_threshold: target,target_weapon,target_trinket = 'commander',best_weapon,'super_flame_march_general_trinket' if 'super_flame_march_general_trinket' in trinkets else 'flame_march_general_trinket'
+    elif streak > (6 if 'g' in args.z else 9): target,target_weapon,target_trinket = 'gargantua',best_weapons['Draconic'],'gargantua_trinket'
     elif level == 1: 
         target_weapon = best_weapons['Physical']
         for m in ['desert_warrior_weak','desert_scout_weak','desert_archer_weak']:
             type = m.split('_')[1]
-            if m in mice and mice[m]: target,target_trinket = m,'flame_march_%s_trinket'%(type); break
+            if m in mice and mice[m]: target,target_trinket = m,'super_flame_march_%s_trinket'%(type) if 'super_flame_march_%s_trinket'%(type) in trinkets else 'flame_march_%s_trinket'%(type); break
     elif level == 2: 
         for m in ['desert_warrior','desert_scout','desert_archer','desert_mage','desert_cavalry']:
             type = m.split('_')[1]
-            if m in mice and mice[m]: target,target_trinket,target_weapon = m,'flame_march_%s_trinket'%(type),best_weapons['Tactical'] if type=='cavalry' else best_weapons['Hydro'] if type=='mage' else best_weapons['Physical']; break
+            if m in mice and mice[m]: target,target_trinket,target_weapon = m,'super_flame_march_%s_trinket'%(type) if 'super_flame_march_%s_trinket'%(type) in trinkets else 'flame_march_%s_trinket'%(type),best_weapons['Tactical'] if type=='cavalry' else best_weapons['Hydro'] if type=='mage' else best_weapons['Physical']; break
     elif level == 3:
         for m in ['desert_warrior_epic','desert_scout_epic','desert_archer_epic','desert_mage_strong','desert_cavalry_strong','desert_artillery']:
             type = m.split('_')[1]
-            if m in mice and mice[m]: target,target_trinket,target_weapon = m,'flame_march_%s_trinket'%(type),best_weapons['Tactical'] if type=='cavalry' else best_weapons['Hydro'] if type=='mage' else best_weapons['Arcane'] if type=='artillery' else best_weapons['Physical']; break
-    else: pass
+            if m in mice and mice[m]: target,target_trinket,target_weapon = m,'super_flame_march_%s_trinket'%(type) if 'super_flame_march_%s_trinket'%(type) in trinkets else 'flame_march_%s_trinket'%(type),best_weapons['Tactical'] if type=='cavalry' else best_weapons['Hydro'] if type=='mage' else best_weapons['Arcane'] if type=='artillery' else best_weapons['Physical']; break
+    else: target,target_trinket,target_weapon = 'desert_elite_gaurd' if 'desert_elite_gaurd' in mice else 'desert_boss',None,best_weapons['Physical']
     
     if target_weapon:
         if target_weapon and current_weapon != target_weapon: arm_weapon(target_weapon)
@@ -972,14 +993,139 @@ def fiery(loop_counter=0):
             if target_trinket in ['flame_march_warrior_trinket','flame_march_scout_trinket','flame_march_archer_trinket']: buy(target_trinket,10)
             else: target_trinket = None
         if target_trinket != current_trinket: arm_charm(target_trinket if target_trinket else 'disarm')
-        print('[%s] [%s] level: %s, streak: %s. target: %s, quantity: %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),level,streak,target,mice[target]))
+        print('[%s] [%s] level: %s, streak: %s. target: %s, quantity: %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),level,streak,target,mice[target] if target in mice else '1'))
     elif loop_counter > 5: 
         print('looped too many times. quitting!')
         quit()
     else: fiery(loop_counter+1)
 
+def fort(): pass
+
+def garden(loop_counter=0):
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    target_weapon, target_bait, target_location, target_trinket = '','','',''
+    
+    if 'desert_oasis' not in allowed_regions: return print('[%s] [%s] no access to living garden. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
+    for type in ['Hydro','Arcane','Shadow']:
+        if type not in best_weapons: return print('[%s] [%s] no %s weapon. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),type.lower()))
+    
+    if current_location not in ['desert_oasis','lost_city','sand_dunes']:
+        travel('desert_oasis')
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    for i in ['QuestLivingGarden','QuestLostCity','QuestSandDunes']:
+        if i in j['user']['quests']: normal = j['user']['quests'][i]['is_normal']; break
+
+    if ('dewthief_petal_crafting_item' in crafts and crafts['dewthief_petal_crafting_item'] > 1) or ('duskshade_petal_crafting_item' in crafts and crafts['duskshade_petal_crafting_item'] > 1 and 'dreamfluff_herbs_crafting_item' in crafts and crafts['dreamfluff_herbs_crafting_item'] > 1) or ('graveblossom_petal_crafting_item' in crafts and crafts['graveblossom_petal_crafting_item'] > 1) or ('lunaria_petal_crafting_item' in crafts and crafts['lunaria_petal_crafting_item'] > 1 and 'plumepearl_herbs_crafting_item' in crafts and crafts['plumepearl_herbs_crafting_item'] > 1):
+        if current_location not in ['desert_oasis','lost_city','sand_dunes']: travel('desert_oasis')
+        if 'dewthief_petal_crafting_item' in crafts and crafts['dewthief_petal_crafting_item'] > 1: buy('dewthief_camembert_cheese',crafts['dewthief_petal_crafting_item']-1)
+        if 'duskshade_petal_crafting_item' in crafts and crafts['duskshade_petal_crafting_item'] > 1 and 'dreamfluff_herbs_crafting_item' in crafts and crafts['dreamfluff_herbs_crafting_item'] > 1: buy('duskshade_camembert_cheese',min(crafts['duskshade_petal_crafting_item'],crafts['dreamfluff_herbs_crafting_item'])-1)
+        if 'graveblossom_petal_crafting_item' in crafts and crafts['graveblossom_petal_crafting_item'] > 1: buy('graveblossom_camembert_cheese',crafts['graveblossom_petal_crafting_item']-1)
+        if 'lunaria_petal_crafting_item' in crafts and crafts['lunaria_petal_crafting_item'] > 1 and 'plumepearl_herbs_crafting_item' in crafts and crafts['plumepearl_herbs_crafting_item'] > 1: buy('lunaria_camembert_cheese',min(crafts['lunaria_petal_crafting_item'],crafts['plumepearl_herbs_crafting_item'])-1)    
+    elif not normal:
+        if 'lunaria_camembert_cheese' in baits or 'graveblossom_camembert_cheese' not in baits:
+            if current_location != 'desert_oasis':
+                travel('desert_oasis')
+                current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+                
+            bucket,red_drops,yellow_drops,timer = j['user']['quests']['QuestLivingGarden']['minigame']['vials_state'],j['user']['quests']['QuestLivingGarden']['minigame']['red_drops'],j['user']['quests']['QuestLivingGarden']['minigame']['yellow_drops'],j['user']['quests']['QuestLivingGarden']['minigame']['timer']
+            target_weapon, target_bait, target_trinket = best_weapons['Hydro'],'lunaria_camembert_cheese' if 'lunaria_camembert_cheese' in baits else 'duskshade_camembert_cheese' if 'duskshade_camembert_cheese' in baits else 'gouda_cheese',None
+            
+            if target_bait == 'lunaria_camembert_cheese': pass
+            elif red_drops >= 10 and yellow_drops >= 10: requests.post('https://www.mousehuntgame.com/managers/ajax/environment/livinggarden.php',{'action':'dump_bucket','uh':hash},cookies=cookies,headers=post_headers)
+            elif red_drops < 10: target_trinket = 'red_sponge_trinket'
+            else: target_trinket = 'yellow_sponge_trinket'
+            
+            if target_trinket and target_trinket not in trinkets:
+                if 'essence_b_crafting_item' in crafts: buy(target_trinket,1)
+                else: target_trinket = None
+                
+            print(('[%s] [%s] hunting with %s at twisted %s: %s left. %s bucket: %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),target_bait,current_location,baits[target_bait],bucket,'red: %s/10, yellow: %s/10, red charms: %s, yellow charms: %s'%(red_drops,yellow_drops,trinkets['red_sponge_trinket'] if 'red_sponge_trinket' in trinkets else 0,trinkets['yellow_sponge_trinket'] if 'yellow_sponge_trinket' in trinkets else 0) if bucket == 'filling' else '%s turns left'%timer)).replace('_cheese','').replace('_',' '))
+            
+        elif 'lunaria_petal_crafting_item' in crafts and crafts['lunaria_petal_crafting_item'] > 1:
+            if current_location != 'lost_city':
+                travel('lost_city')
+                current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+            
+            curses = [d for d in j['user']['quests']['QuestLostCity']['minigame']['curses'] if d['active']]
+            target_weapon, target_bait, target_trinket = best_weapons['Arcane'],'graveblossom_camembert_cheese',None
+            if curses: target_trinket = curses[0]['charm']['name'].lower().replace(' charm','_trinket')
+            
+            if target_trinket and target_trinket not in trinkets:
+                if 'essence_b_crafting_item' in crafts: buy(target_trinket,1)
+                else: target_trinket = None
+            
+            print(('[%s] [%s] hunting with %s at twisted %s: %s left. curses: %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),target_bait,current_location,baits[target_bait],', '.join(d['type'] for d in curses) if curses else 'off')).replace('_cheese','').replace('_',' '))
+            
+        else:
+            if current_location != 'sand_dunes':
+                travel('sand_dunes')
+                current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+            
+            salts = j['user']['quests']['QuestSandDunes']['minigame']['salt_charms_used']
+            target_weapon, target_bait, target_trinket = best_weapons['Shadow'],'graveblossom_camembert_cheese','grub_scent_trinket' if salts >= 40 else 'grub_salt_trinket'
+            
+            if target_trinket and target_trinket not in trinkets:
+                if target_trinket == 'grub_scent_trinket' and 'essence_c_crafting_item' in crafts: buy(target_trinket,1)
+                elif target_trinket == 'grub_salt_trinket' and 'essence_b_crafting_item' in crafts: buy(target_trinket,1)
+                else: target_trinket = None
+            
+            print(('[%s] [%s] hunting with %s at twisted %s: %s left. salts: %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),target_bait,current_location,baits[target_bait],salts)).replace('_cheese','').replace('_',' '))
+            
+    elif ('duskshade_camembert_cheese' in baits and baits['duskshade_camembert_cheese'] > 20) or 'dewthief_camembert_cheese' not in baits:
+        if current_location != 'desert_oasis':
+            travel('desert_oasis')
+            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+            
+        bucket,drops,timer = j['user']['quests']['QuestLivingGarden']['minigame']['bucket_state'],j['user']['quests']['QuestLivingGarden']['minigame']['dewdrops'],j['user']['quests']['QuestLivingGarden']['minigame']['timer']
+        target_weapon, target_bait = best_weapons['Hydro'],'duskshade_camembert_cheese' if 'duskshade_camembert_cheese' in baits and baits['duskshade_camembert_cheese'] > 20 else 'gouda_cheese'
+        target_trinket = 'sponge_trinket' if bucket == 'filling' and drops < 20 and target_bait == 'gouda_cheese' else None
+        
+        if drops >= 20: requests.post('https://www.mousehuntgame.com/managers/ajax/environment/livinggarden.php',{'action':'dump_bucket','uh':hash},cookies=cookies,headers=post_headers)        
+        if target_trinket and target_trinket not in trinkets:
+            if 'essence_a_crafting_item' in crafts: buy(target_trinket,min(crafts['essence_a_crafting_item'],20-drops))
+            else: target_trinket = None
+            
+        print(('[%s] [%s] hunting with %s at normal %s: %s left. %s bucket: %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),target_bait,current_location,baits[target_bait],bucket,'%s/%s, sponge charms: %s'%(drops,20,trinkets['sponge_trinket'] if 'sponge_trinket' in trinkets else 0) if bucket == 'filling' else '%s turns left'%timer)).replace('_cheese','').replace('_',' '))
+        
+    elif 'duskshade_petal_crafting_item' in crafts and crafts['duskshade_petal_crafting_item'] > 1:
+        if current_location != 'lost_city':
+            travel('lost_city')
+            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        curse = j['user']['quests']['QuestLostCity']['minigame']['is_cursed']
+        target_weapon, target_bait, target_trinket = best_weapons['Arcane'],'dewthief_camembert_cheese', 'searcher_trinket' if curse else None
+        
+        if target_trinket and target_trinket not in trinkets:
+            if 'essence_a_crafting_item' in crafts: buy(target_trinket,1)
+            else: target_trinket = None
+        
+        print(('[%s] [%s] hunting with %s at normal %s: %s left. curse: %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),target_bait,current_location,baits[target_bait],'on' if curse else 'off')).replace('_cheese','').replace('_',' '))
+        
+    else:
+        if current_location != 'sand_dunes':
+            travel('sand_dunes')
+            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        
+        stampede = j['user']['quests']['QuestSandDunes']['minigame']['has_stampede']
+        target_weapon, target_bait, target_trinket = best_weapons['Shadow'],'dewthief_camembert_cheese','grubling_chow_trinket' if stampede else None
+        if target_trinket and target_trinket not in trinkets:
+            if 'essence_a_crafting_item' in crafts: buy(target_trinket,1)
+            else: target_trinket = None
+        
+        print(('[%s] [%s] hunting with %s at normal %s: %s left. stampede: %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),target_bait,current_location,baits[target_bait],'on' if stampede else 'off')).replace('_cheese','').replace('_',' '))
+
+    if current_base != best_base: arm_base(best_base)
+    if 'gouda_cheese' not in baits or baits['gouda_cheese'] < 15: buy('gouda_cheese',15)    
+    if target_weapon:
+        if current_weapon != target_weapon: arm_weapon(target_weapon)
+        if current_bait != target_bait: arm_bait(target_bait)
+        if current_trinket != target_trinket : arm_charm(target_trinket if target_trinket else 'disarm')
+    elif loop_counter > 5: 
+        print('looped too many times. quitting!')
+        quit()
+    else: garden(loop_counter+1)
+
 def halloween(loop_counter=0):
-    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
         
     if 'halloween_event_location' not in allowed_regions: return print('[%s] [%s] no access to halloween location. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
     if 'alchemists_cookbook_base' in bases: best_base = 'alchemists_cookbook_base'
@@ -987,7 +1133,7 @@ def halloween(loop_counter=0):
     target_bait,target_trinket = '',''
     if current_location != 'halloween_event_location':
         travel('halloween_event_location')
-        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
     r = j['user']['quests']['QuestHalloweenBoilingCauldron']
     if 'brie_cheese' not in baits or baits['brie_cheese'] < 15: buy('brie_cheese',15)
     
@@ -1036,11 +1182,75 @@ def halloween(loop_counter=0):
         print('looped too many times. quitting!')
         quit()
     else: halloween(loop_counter+1)
+    
+def xmas(loop_counter=0):
+    current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
         
+    if 'winter_hunt_grove' not in allowed_regions: return print('[%s] [%s] no access to xmas location. hunting normally'%(datetime.datetime.now().replace(microsecond=0),cycle.upper()))
+    
+    golem = {type:(stats['golem_part_%s_stat_item'%type] if 'golem_part_%s_stat_item'%type in stats else 0) for type in ['head','torso','limb']}
+    ng = min(golem['head'],golem['torso'],golem['limb']//4)
+    cn = max(0,(ng+1)*4-golem['limb'])*6
+    need = {'limb': bool(cn), 'head': golem['head']==ng, 'torso': golem['torso']==ng}
+    cn += (12 if need['head'] else 0) + (12 if need['torso'] else 0)
+    if 'QuestGolemWorkshop' in j['user']['quests']:
+        for type in ['head','torso','limb']:
+            if need[type]: cn -= j['user']['quests']['QuestGolemWorkshop']['workshop'][type]['progress']
+            
+    fl = j['user']['quests']['QuestIceFortress']['shield']['health'] if 'QuestIceFortress' in j['user']['quests'] else 36
+    
+    if 'h' not in args.z and 'w' not in args.z and ('f' in args.z or not fl or ('hailstone_stat_item' in stats and (stats['hailstone_stat_item'] >= fl or 'compressed_cinnamon_coal_stat_item' not in stats or cn > stats['compressed_cinnamon_coal_stat_item']))):
+        if current_location != 'winter_hunt_fortress':
+            travel('winter_hunt_fortress')
+            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        if not j['user']['quests']['QuestIceFortress']['cannons']['cinnamon_cannon']['is_active'] and 'hailstone_stat_item' in stats: requests.post('https://www.mousehuntgame.com/managers/ajax/events/winter_hunt_ice_fortress.php',{'action':'toggle_cannon','uh':hash,'cannon_type':'cinnamon'},cookies=cookies,headers=post_headers)
+        for type in ['snow','charm']: 
+            if j['user']['quests']['QuestIceFortress']['cannons']['%s_cannon'%type]['is_active']: requests.post('https://www.mousehuntgame.com/managers/ajax/events/winter_hunt_ice_fortress.php',{'action':'toggle_cannon','uh':hash,'cannon_type':type},cookies=cookies,headers=post_headers)
+        report = 'FORTRESS: hailstones: %s, cinnamons: %s/%s, fortress health: %s'%(stats['hailstone_stat_item'] if 'hailstone_stat_item' in stats else 0,stats['compressed_cinnamon_coal_stat_item'] if 'compressed_cinnamon_coal_stat_item' in stats else 0,cn,j['user']['quests']['QuestIceFortress']['shield']['health'])
+    elif 'w' in args.z or ('h' not in args.z and 'compressed_cinnamon_coal_stat_item' in stats and cn <= stats['compressed_cinnamon_coal_stat_item']):
+        if current_location != 'winter_hunt_workshop':
+            travel('winter_hunt_workshop')
+            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        for type in ['head','torso','limb']:
+            if ('compressed_cinnamon_coal_stat_item' in stats and need[type]) != bool(j['user']['quests']['QuestGolemWorkshop']['workshop'][type]['is_active']): requests.post('https://www.mousehuntgame.com/managers/ajax/events/winter_hunt_golem_workshop.php',{'action':'toggle_maker','uh':hash,'maker_type':type},cookies=cookies,headers=post_headers)
+        report = 'WORKSHOP: cinnamons: %s, %s'%(stats['compressed_cinnamon_coal_stat_item'] if 'compressed_cinnamon_coal_stat_item' in stats else 0,', '.join('%s forge: %s'%(c,j['user']['quests']['QuestGolemWorkshop']['workshop'][c]['num_hunts_remaining'] if need[c] else 'OFF') for c in ['head','torso','limb']))
+    else:
+        if current_location != 'winter_hunt_grove': 
+            travel('winter_hunt_grove')
+            current_location,current_base,current_weapon,current_bait,current_trinket,baits,crafts,stats,trinkets,potions,bases,weapons,chests,best_weapons,best_base,best_weapon,j = prologue()
+        report = 'HILL: cinnamons: %s/%s, hailstones: %s/%s'%(stats['compressed_cinnamon_coal_stat_item'] if 'compressed_cinnamon_coal_stat_item' in stats else 0,cn,stats['hailstone_stat_item'] if 'hailstone_stat_item' in stats else 0,fl)
+    
+    for k in ['QuestGolemWorkshop','QuestIceFortress','QuestCinnamonTreeGrove']:
+        if k in j['user']['quests']: 
+            golem_progress = [c['hunts_remaining'] for c in j['user']['quests'][k]['golems']]
+            for i in range(3):
+                if j['user']['quests'][k]['golems'][i]['can_claim']: requests.post('https://www.mousehuntgame.com/managers/ajax/events/winter_hunt_region.php',{'action':'claim_reward','uh':hash,'slot':i},cookies=cookies,headers=post_headers)
+            break
+    
+    if current_weapon != best_weapon: arm_weapon(best_weapon)
+    best_base = 'seasonal_gift_of_the_day_base' if 'seasonal_gift_of_the_day_base' in bases else best_base
+    if current_base != best_base: arm_base(best_base)
+    
+    if 'gouda_cheese' not in baits or baits['gouda_cheese'] < 15: buy('gouda_cheese',15)
+    if current_location == 'winter_hunt_fortress' and fl == 0: target_bait = 'gouda_cheese'
+    elif 'glazed_pecan_pecorino_cheese' in baits and 'g' in args.z: target_bait = 'glazed_pecan_pecorino_cheese'
+    elif 'p' not in args.z and 'pecan_pecorino_cheese' in baits and baits['pecan_pecorino_cheese'] > 1: target_bait = 'pecan_pecorino_cheese'
+    else: target_bait = 'gouda_cheese'
+    if current_bait != target_bait: arm_bait(target_bait)
+    
+    target_trinket = ''
+    if 'c' in args.z and best_base == 'seasonal_gift_of_the_day_base':
+        for trinket in ['snowball_trinket','super_snowball_trinket','ultimate_snowball_trinket']:
+            if trinket in trinkets: target_trinket = trinket; break
+    if target_trinket != current_trinket: arm_charm(target_trinket if target_trinket else 'disarm')
+    
+    print('[%s] [%s] PARTS: %s. GOLEM TIME: %s. %s'%(datetime.datetime.now().replace(microsecond=0),cycle.upper(),', '.join('%s: %s'%(c,golem[c]) for c in golem),golem_progress,report))
+       
+       
 ##### HORN #####
 def status_check(v=True):
     global hash,allowed_regions,antibot_triggered,lpt,sn_user_id,lrje
-    if antibot_triggered:
+    if antibot_triggered or args.a:
         d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','login_token':cookie}
         r = requests.post('https://www.mousehuntgame.com/api/action/passiveturn',d,headers=api_headers)
         if r.status_code != 200:
@@ -1058,15 +1268,15 @@ def status_check(v=True):
             login()
             r = requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies).text
         r = r.text
-        hash,sn_user_id,lrje,next_horn,have_bait,gold,points = re.findall('"unique_hash":"([^"]*)"',r)[0],re.findall('"sn_user_id":"([^"]*)"',r)[0],re.findall('lastReadJournalEntryId = ([^;]*);',r)[0],int(re.findall('"next_activeturn_seconds":(\d*)',r)[0]), 'Out of bait!' not in r,re.findall('"gold":([^,]*)',r)[0],re.findall('"points":([^,]*)',r)[0]
+        hash,sn_user_id,lrje,next_horn,have_bait,gold,points = re.findall('"unique_hash":"([^"]*)"',r)[0],re.findall('"sn_user_id":"([^"]*)"',r)[0],re.findall('lastReadJournalEntryId = ([^;]*);',r)[0],int(re.findall('"next_activeturn_seconds":(\d*)',r)[0]),'"bait_quantity":0' not in r,re.findall('"gold":([^,]*)',r)[0],re.findall('"points":([^,]*)',r)[0]
         if 'The King has sent you a special reward' in r: 
             if not antibot_mode == 'bypass': antibot(r)
             else:
                 antibot_triggered = True
                 return status_check()
-    if not horns%refresh_rate: allowed_regions = regions()
-    if not have_bait: change_bait()
-    if v: print('[%s] current gold: %s, current points: %s; horns so far: %s%s'%(datetime.datetime.now().replace(microsecond=0),gold,points,horns,', antibot: %s'%('ACTIVE' if antibot_triggered else 'inactive') if antibot_mode == 'bypass' else ''))
+    if not horns and not args.a: allowed_regions = regions()
+    if not have_bait and not args.a: change_bait()
+    if v: print('[%s] current gold: %s, current points: %s; horns so far: %s%s, last horn latency: %s'%(datetime.datetime.now().replace(microsecond=0),gold,points,horns,', antibot: %s'%('ACTIVE' if antibot_triggered else 'inactive') if antibot_mode == 'bypass' else '',latency))
     return next_horn
 
 def wait(delay_mins,norandom=False):
@@ -1086,23 +1296,32 @@ def print_entry(t):
     except: print('[%s] %s'%(datetime.datetime.now().replace(microsecond=0),t.lstrip()))    
 
 def horn():
+    global latency
     fail = 0
-    while 1:     
-        wait_time = status_check()
-        if wait_time: 
-            print('[%s] horn not ready'%(datetime.datetime.now().replace(microsecond=0)))
-            wait(float((wait_time+2)/60),norandom=True)
-        horn_time = int(time.time())
-        if cycle: choose_cycle()
-        if antibot_triggered:
-            d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','last_passiveturn_timestamp':lpt,'login_token':cookie}        
-            success = json.loads(requests.post('https://www.mousehuntgame.com/api/action/turn/me',d,headers=api_headers).text)['success']
+    try: lpt = lpt
+    except: lpt = int(time.time()) - 15*60
+    while 1:
+        if not args.a: 
+            wait_time = status_check()
+            while wait_time: 
+                print('[%s] horn not ready'%(datetime.datetime.now().replace(microsecond=0)))
+                wait(float((wait_time+2)/60),norandom=True)
+                wait_time = status_check()
+            horn_time = int(time.time())
+            if cycle: choose_cycle()
+        latency_start = time.time()
+        if antibot_triggered or args.a:
+            d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','last_passiveturn_timestamp':lpt,'login_token':cookie}
+            j = json.loads(requests.post('https://www.mousehuntgame.com/api/action/turn/me',d,headers=api_headers).text)
+            success,wait_time = j['success'],j['user']['next_activeturn_seconds']
         else:
             d = {"uh":hash,"last_read_journal_entry_id":lrje,"hg_is_ajax":1,"sn":"Hitgrab"}
             j = json.loads(requests.post('https://www.mousehuntgame.com/managers/ajax/turns/activeturn.php',d,cookies=cookies,headers=post_headers).text)
-            success = j['success']
+            success,wait_time = j['success'],j['user']['next_activeturn_seconds']
         if success:
-            if antibot_triggered:
+            latency = round(time.time()-latency_start,3)
+            if args.a: print('[%s] horn success (latency %s). horns so far: %s'%(datetime.datetime.now().replace(microsecond=0),latency,horns+1))
+            elif antibot_triggered:
                 d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','offset':0,'limit':72,'return_user':'true','login_token':cookie}        
                 r = json.loads(requests.post('https://www.mousehuntgame.com/api/get/journalentries/me',d,headers=api_headers).text)
                 for entry in r['entries']:
@@ -1110,7 +1329,7 @@ def horn():
                     print_entry(entry['text'])
             else:
                 for entry in j['journal_markup']:
-                    if entry['render_data']['entry_timestamp'] < horn_time: break
+                    if entry['render_data']['entry_timestamp'] < horn_time-2: break
                     print_entry(entry['render_data']['text'])
             return 1
         else:
@@ -1118,8 +1337,12 @@ def horn():
             if fail >= max_fail:
                 print('[%s] %s consecutive horn failures. aborting'%(datetime.datetime.now().replace(microsecond=0),fail))
                 quit()
-            print('[%s] failed to sound the horn. trying again in a bit...'%(datetime.datetime.now().replace(microsecond=0)))
-            time.sleep(3)
+            if wait_time: 
+                print('[%s] horn not ready'%(datetime.datetime.now().replace(microsecond=0)))
+                wait(float((wait_time+2)/60),norandom=True)
+            else: 
+                print('[%s] failed to sound the horn. trying again in 3 secs...'%(datetime.datetime.now().replace(microsecond=0)))
+                time.sleep(3)
 
 def change_bait():
     print('[%s] out of bait. checking availability...'%(datetime.datetime.now().replace(microsecond=0)))
@@ -1161,7 +1384,9 @@ def antibot(text):
         else: print('[%s] something went wrong. check if code might have changed'%(datetime.datetime.now().replace(microsecond=0)))
         text = requests.get('https://www.mousehuntgame.com/camp.php',cookies=cookies).text
 
-wait(max(float((status_check(False)+2)/60),float(args.w if args.w else 0)),norandom=True)
+initial_wait = 0 if args.a else status_check(False)
+if initial_wait > 60: choose_cycle()
+wait(max(float((initial_wait+1)/60),float(args.w if args.w else 0)),norandom=True)
 while 1:
     if random.random() >= miss_chance or horns==0: 
         horns += horn()
