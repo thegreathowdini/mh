@@ -61,6 +61,8 @@ If you set anything else as the value of ua, the User-Agent header is set to tha
 
 **First wait.** When autohunt starts, the horn is first sounded 2s after it's available and without missing. To delay the first horn, set the value of the -w option to the time in minutes (from the time the script is started) that autohunt should wait.
 
+**Minimal mode.** Running autohunt with -a puts it in minimal mode, in which the only request sent to the server is to sound the horn (and login, if not using cookie). This is useful when the MH server is experiencing such high latency that the usual autohunt functions become impractically slow. However, minimal mode should be used only when necessary, because it entails that requests are sent to sound the horn without checking that the horn is ready, or that there is bait, etc. In particular, if the -w option is not set, a request is sent to sound the horn 1s after the script starts regardless of whether the horn is ready. In minimal mode cycles are disabled and the antibot mode is fixed at bypass, but the script parameter options remain available.
+
 <br><hr />
 <a name="mhconsole"/>
 
