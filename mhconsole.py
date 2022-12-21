@@ -101,7 +101,7 @@ def exit_mhconsole():
 
 ########## POST-AUTH FUNCTIONS ##########
 def postauth():
-    global hash,user
+    global hash,user,password,cookie
     help_msg = '''
 ========== GENERAL COMMANDS ==========
 horn\t\t\tsound the horn
@@ -157,7 +157,7 @@ kr [code]\t\tsolve captcha
     elif not cmd: return 0
     elif cmd == 'logout': return logout()
     elif cmd == 'unauth': 
-        hash,user = '',''
+        hash,user,password,cookie = '','','',''
         return print('[+] cookie removed from current console session')
     elif cmd == 'exit' or cmd == 'quit': exit_mhconsole()
     elif cmd in ['horn','info','arm','move','buy','list','add','del','reset','show','run','hammer','chest','pot','kr']: pass
@@ -182,32 +182,33 @@ kr [code]\t\tsolve captcha
     elif cmd == 'pot': pot(args)
     elif cmd == 'kr': kr(args)
     else: return huh()
+
+def print_entry(t):
+    try: 
+        for m in re.findall('<[^>]*>',t): t = t.replace(m,'')
+        s = t.index('!',20) if '!' in t[20:-2] else t.index('.',(t.index('oz.')+3) if 'oz.' in t else 0)
+        if t[:s+1]: print('\t%s'%(t[:s+1].lstrip()))
+        if t[s+1:]: print_entry(t[s+1:])
+    except: print('\t%s'%(t.lstrip()))
         
 def horn(content): 
     global horns
     lpt = content['user']['last_passiveturn_timestamp']
     m = content['user']['next_activeturn_seconds']
-    if m: return print('[-] too soon to sound. next horn in %s:%s'%(m//60,m%60))
+    if m: 
+        n = ('%s'%(datetime.datetime.now().replace(microsecond=0)+datetime.timedelta(seconds=m))).split(' ')[1]
+        return print('[-] too soon to sound. next horn in %s:%s at %s'%(m//60,m%60,n))
     else:
         horn_time = int(time.time())
         d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','last_passiveturn_timestamp':lpt,'login_token':cookie}        
         r = json.loads(requests.post('https://www.mousehuntgame.com/api/action/turn/me',d,headers=api_headers).text)
         if r['success']: 
             print('[+] successfully sounded the horn. response:\n')
-            d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','game_version':'v96087153','offset':0,'limit':72,'return_user':'true','login_token':cookie}        
+            d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','offset':0,'limit':72,'return_user':'true','login_token':cookie}        
             r = json.loads(requests.post('https://www.mousehuntgame.com/api/get/journalentries/me',d,headers=api_headers).text)
             for entry in r['entries']:
                 if entry['timestamp'] < horn_time: return
-                try: 
-                    t = entry['text']
-                    s = t.index('!',10) if '!' in t[10:-2] else t.index('.')
-                    if t[:s+1]: print('\t%s'%(t[:s+1].lstrip()))
-                    if t[s+1:]:
-                        t = t[s+1:]
-                        s = t.index('.',t.index('oz.')+3) if 'oz.' in t else t.index('.')
-                        if t[:s+1]: print('\t%s'%(t[:s+1].lstrip()))
-                        if t[s+1:]: print('\t%s'%(t[s+1:].lstrip()))
-                except: print('\t%s'%(t.lstrip()))
+                print_entry(entry['text'])
         else: print('[-] failed to sound the horn')
     
 def info():     
@@ -511,10 +512,15 @@ def chest(args):
         if not qty: qty = chests[target_item]
         if qty > chests[target_item]: return print('[-] quantity exceeds inventory')
         
+        chest_time = int(time.time())
         j = json.loads(requests.post('https://www.mousehuntgame.com/managers/ajax/users/useconvertible.php',{'uh':hash,'item_type':target_item,'item_qty':qty},headers=post_headers,cookies=cookies).text)
-        if j['success'] == 1: print('[+] opened %s'%target_item.replace('_',' '))
+        if j['success'] == 1: 
+            d = {'v':3,'client_id':'Cordova:iOS','client_version':'1.135.2','offset':0,'limit':72,'return_user':'true','login_token':cookie}        
+            r = json.loads(requests.post('https://www.mousehuntgame.com/api/get/journalentries/me',d,headers=api_headers).text)
+            for entry in r['entries']:
+                if entry['timestamp'] < chest_time: return
+                print(entry['text'])
         else: print('[-] failed')
-        
         
 def pot(args):
     j = json.loads(requests.post('https://www.mousehuntgame.com/managers/ajax/users/gettrapcomponents.php',cookies=cookies,headers=post_headers).text)
